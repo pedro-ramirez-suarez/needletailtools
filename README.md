@@ -10,6 +10,6 @@
 <li>System.Data.SqlServerCe.dll </li>
 </ul>
 <h3>DataAccess</h3>
-<p>A Micro ORM that is fast and easy to use, supports different DBMSs, for now MSSQL and SQLServer CE are fully supported, there is also a version for MySQL that is being tested, read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail#dataaccess">here</a>.</p>
+<p>A Micro ORM that is fast and easy to use, supports different DBMSs, for now MSSQL and SQLServer CE are fully supported, there is also a version for MySQL that is being tested, read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail#wiki-dataaccess">here</a>.</p>
 <h3>DataAccess.Migrations</h3>
-<p>A tool to manage database migrations as part of your application, you can use this tool to initialize migrate and seed the database, very simple to use and understand, read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail#dataaccessmigrations"> here</a>.</p>
+<p>A tool to manage database migrations as part of your application, you can use this tool to initialize migrate and seed the database, very simple to use and understand, read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail#wiki-dataaccessmigrations"> here</a>.</p>

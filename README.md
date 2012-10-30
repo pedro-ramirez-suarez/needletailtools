@@ -11,5 +11,10 @@
 </ul>
 <h3>DataAccess</h3>
 <p>A Micro ORM that is fast and easy to use, supports different DBMSs, for now MSSQL and SQLServer CE are fully supported, there is also a version for MySQL that is being tested, read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail#wiki-dataaccess">here</a>.</p>
+<h4>Usage for DataAccess</h4>
+<p>Ideal when  you need fast access to the database or when you need to change DBMS whitout any hassle, for instance having SQLCE for dev and MSSQL for production.</p>
+
 <h3>DataAccess.Migrations</h3>
 <p>A tool to manage database migrations as part of your application, you can use this tool to initialize migrate and seed the database, very simple to use and understand, read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail#wiki-dataaccessmigrations"> here</a>.</p>
+<h4>Usage for Migrations</h4>
+<p>A good solution for applications running under shared hosting or when you need to manage Database migrations as part of your application.</p>

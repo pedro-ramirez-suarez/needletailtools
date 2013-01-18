@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "DataAccess\DataAccess.csproj", "{67F95ADD-615E-48A5-A833-4DDBA4C364EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{1A673C7C-B967-4CC1-B0BF-76D7DB064719}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess.Repository", "DataAccess.Repository\DataAccess.Repository.csproj", "{813C329F-3D41-4038-9BE1-C906B584380B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess.Migrations", "DataAccess.Migrations\DataAccess.Migrations.csproj", "{A6FCAF88-62ED-4352-825C-8581754EAE65}"
@@ -12,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess.SqlCE", "DataAccess.SqlCE\DataAccess.SqlCE.csproj", "{15916A7B-8931-4BEA-9242-25D7153D2CE1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess.MySql", "DataAccess.MySql\DataAccess.MySql.csproj", "{6775462C-3622-497E-8004-780445F1E578}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Needletail.Mvc", "Needletail.Mvc\Needletail.Mvc.csproj", "{08E009FF-8F53-468D-9024-31FAD0929909}"
 EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
@@ -37,16 +37,6 @@ Global
 		{67F95ADD-615E-48A5-A833-4DDBA4C364EA}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{67F95ADD-615E-48A5-A833-4DDBA4C364EA}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{67F95ADD-615E-48A5-A833-4DDBA4C364EA}.Release|x86.ActiveCfg = Release|Any CPU
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Debug|x86.ActiveCfg = Debug|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Debug|x86.Build.0 = Debug|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Release|Any CPU.ActiveCfg = Release|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Release|Mixed Platforms.Build.0 = Release|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Release|x86.ActiveCfg = Release|x86
-		{1A673C7C-B967-4CC1-B0BF-76D7DB064719}.Release|x86.Build.0 = Release|x86
 		{813C329F-3D41-4038-9BE1-C906B584380B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{813C329F-3D41-4038-9BE1-C906B584380B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{813C329F-3D41-4038-9BE1-C906B584380B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
@@ -87,6 +77,16 @@ Global
 		{6775462C-3622-497E-8004-780445F1E578}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{6775462C-3622-497E-8004-780445F1E578}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{6775462C-3622-497E-8004-780445F1E578}.Release|x86.ActiveCfg = Release|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

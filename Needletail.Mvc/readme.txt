@@ -20,4 +20,4 @@ An example of how to initialize the library using the default controller added b
 </script>
 
 You can find a simple chat application here:
-https://github.com/pedro-ramirez-suarez/needletailtools
+https://github.com/pedro-ramirez-suarez/Needletail.Mvc.Sample

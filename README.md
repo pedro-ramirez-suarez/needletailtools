@@ -27,4 +27,4 @@ this is allows you to tell the client(browser) to call some function when an eve
 Only works with MVC 4 and with browsers that support SSE(sorry, no IE).
 </p>
 <h4>Usage for Needletail.Mvc</h4>
-<p>When you need to execute code on the browser when something happens on the server, the most basic scenario for this, is a chat application</p>
+<p>When you need to execute code on the browser when something happens on the server, the most basic scenario for this, is a chat application, you can read more <a href="https://github.com/pedro-ramirez-suarez/needletailtools/wiki/Using-Needletail.Mvc">here</a></p>

@@ -13,10 +13,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess.MySql", "DataAcc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Needletail.Mvc", "Needletail.Mvc\Needletail.Mvc.csproj", "{08E009FF-8F53-468D-9024-31FAD0929909}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Needletail.Tests", "Needletail.Tests\Needletail.Tests.csproj", "{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{24AED504-EC8A-4E9D-9335-70A76CD57910}"
+	ProjectSection(SolutionItems) = preProject
+		Local.testsettings = Local.testsettings
+		Needletail.vsmdi = Needletail.vsmdi
+		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
 		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Needletail.vsmdi
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +99,16 @@ Global
 		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{08E009FF-8F53-468D-9024-31FAD0929909}.Release|x86.ActiveCfg = Release|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{E2F7A57F-44FE-4E78-9FFE-12A88ABA3E0F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

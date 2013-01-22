@@ -14,6 +14,10 @@ using System.Web;
 
 namespace Needletail.Mvc
 {
+
+    /// <summary>
+    /// The entry point for the remote execution
+    /// </summary>
     public abstract class RemoteExecutionController : ApiController
     {
 
@@ -83,6 +87,10 @@ namespace Needletail.Mvc
             }
         }
 
+        /// <summary>
+        /// Used to raise the Connection lost event from outside
+        /// </summary>
+        /// <param name="call">The call that failed</param>
         internal static void RaiseConnectionLostEvent(ClientCall call)
         {
             if (ConnectionLost != null)

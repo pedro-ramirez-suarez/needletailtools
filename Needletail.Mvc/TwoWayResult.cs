@@ -9,6 +9,9 @@ using System.Web.Http;
 
 namespace Needletail.Mvc
 {
+    /// <summary>
+    /// Use this to request remote calls on the client, you can use it in any controller
+    /// </summary>
     public class TwoWayResult : ActionResult
     {
 

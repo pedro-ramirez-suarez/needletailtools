@@ -7,6 +7,10 @@ using System.Web.Script.Serialization;
 
 namespace Needletail.Mvc
 {
+    /// <summary>
+    /// Used to request javascript call from the server, pass an object of this class to any of the mechanisms that allows
+    /// you to make remote calls
+    /// </summary>
     public class ClientCall : DynamicObject
     {
         /// <summary>
@@ -18,6 +22,10 @@ namespace Needletail.Mvc
         private object[] Parameters { get; set; }
         private ClientCall Child { get; set; }
 
+
+        /// <summary>
+        /// The override, this stores the name of the method that is being invoked
+        /// </summary>
         public override bool TryInvokeMember(InvokeMemberBinder binder, object[] args, out object result)
         {
             //we are not invoking anything here
@@ -31,6 +39,9 @@ namespace Needletail.Mvc
             
         }
 
+        /// <summary>
+        /// This is used when a the javascript call its part of a javascript namespace
+        /// </summary>
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             //if clientId or callerid is invoked set the values
@@ -52,6 +63,9 @@ namespace Needletail.Mvc
         }
 
 
+        /// <summary>
+        /// Only CallerId and ClientId can be set dynamically
+        /// </summary>
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             //if clientId or callerid is invoked set the values
@@ -66,6 +80,9 @@ namespace Needletail.Mvc
         }
 
 
+        /// <summary>
+        /// Used to get the parameter list of the call, if this is not the final call, the parameter list comes from a child object
+        /// </summary>
         private object[] GetParameters()
         {
             if (this.Child == null)
@@ -74,6 +91,10 @@ namespace Needletail.Mvc
                 return Child.Parameters;
         }
 
+
+        /// <summary>
+        /// javascript serialization of the object
+        /// </summary>
         public override string ToString()
         {
             string method = this.Child == null ?  this.Method : string.Concat(this.Method, ".", Child.Method);

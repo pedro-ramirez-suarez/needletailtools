@@ -7,8 +7,15 @@ using System.Collections.Concurrent;
 
 namespace Needletail.Mvc.Communications
 {
+
+    /// <summary>
+    /// This is the one that does the final job of sending the commands to the client(s)
+    /// </summary>
     internal class SseHelper
     {
+        /// <summary>
+        /// A reference to all the connected clients
+        /// </summary>
         static Dictionary<string, StreamWriter> clientStreams = new Dictionary<string, StreamWriter>();
 
 
@@ -53,7 +60,10 @@ namespace Needletail.Mvc.Communications
             return true;
         }
 
-
+        /// <summary>
+        /// Performs the call in all the connected clients
+        /// </summary>
+        /// <param name="remoteCall">details of the call</param>
         internal static void BroadCastMessage(ClientCall remoteCall)
         {
             if (remoteCall == null)

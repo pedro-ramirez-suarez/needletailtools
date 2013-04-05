@@ -13,7 +13,7 @@ using System.Data;
 using Needletail.DataAccess.Entities;
 
 namespace Needletail.DataAccess {
-    public class DBTableDataSourceBase<E, K> : IDataSource<E, K> where E: class {
+    public class DBTableDataSourceBase<E, K> : IDisposable, IDataSource<E, K> where E: class {
 
 
         #region Events
@@ -578,8 +578,6 @@ namespace Needletail.DataAccess {
                 var name = p.Name;
                 string parameterName;
                 string query = SQLTokens.BuildCompare(ref name, out parameterName, ref separator);
-                
-                
 
                 if (x > 0)
                 {
@@ -591,7 +589,10 @@ namespace Needletail.DataAccess {
                 }
 
                 //add the parameter
-                AddParameter(parameterName, p.GetValue(where, null), cmd);
+                var newParam = AddParameter(parameterName, p.GetValue(where, null), cmd);
+                if (newParam != null)
+                    w.Replace(parameterName, newParam);
+                
             }
             return w;
         }
@@ -633,7 +634,7 @@ namespace Needletail.DataAccess {
             if (connection.State != ConnectionState.Closed) connection.Close();
             connection.Open();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            cmd.Prepare();
+               cmd.Prepare();
             //fill the collection
             using (var reader = cmd.ExecuteReader()) {
                 var cols = new List<string>();
@@ -739,19 +740,41 @@ namespace Needletail.DataAccess {
         /// <summary>
         /// add a single parameter to the cmd
         /// </summary>
-        private void AddParameter(string parameterName, object value, DbCommand cmd) {
-            
+        private string AddParameter(string parameterName, object value, DbCommand cmd) {
+                
             var param = factory.CreateParameter();
-
             param.ParameterName = !parameterName.StartsWith("@") ? string.Format("@{0}", parameterName) : parameterName;
-            param.Value = value != null ? value : DBNull.Value;
-            
-            //The dbType and the rest of the info
-            this.DBMSEngineHelper.ConfigureParameterForValue(param, value);
+            if (value.GetType().IsArray)
+            {
+                //create the list
+                Array values = value as Array;
+                var newValue = new StringBuilder();
+                var parameters = new Dictionary<string,object>();
+                string newParamName;
+                for (int x = 0; x < values.Length; x++)
+                {
+                    var val = values.GetValue(x);
+                    newParamName = string.Format("{0}{1}", parameterName, x);
+                    newValue.Append(newParamName);
+                    if (x < (values.Length - 1))
+                        newValue.Append(",");
+                    parameters.Add(newParamName, val);
+                }
+                AddParameters(cmd, parameters);
+                return newValue.ToString();
+            }
+            else
+            { 
+                param.Value = value != null ? value : DBNull.Value;
+                //The dbType and the rest of the info
+                this.DBMSEngineHelper.ConfigureParameterForValue(param, value);
 
-            param.Direction = System.Data.ParameterDirection.Input;
-            param.Size = param.Value != null ? param.Value.ToString().Length + 1 : 1;
-            cmd.Parameters.Add(param);
+                param.Direction = System.Data.ParameterDirection.Input;
+                param.Size = param.Value != null ? param.Value.ToString().Length + 1 : 1;
+                cmd.Parameters.Add(param);
+            }
+
+            return null;
         }
 
 
@@ -813,6 +836,19 @@ namespace Needletail.DataAccess {
                     return default(T);
                 return (T)t;
             }
+        }
+
+
+        /// <summary>
+        /// Release internal objects and dispose the connection
+        /// </summary>
+        public void Dispose()
+        {
+            this.factory = null;
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            this.connection.Dispose();
+            this.converter = null;
+            GC.Collect();
         }
     }
 }

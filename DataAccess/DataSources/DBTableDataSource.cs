@@ -744,7 +744,7 @@ namespace Needletail.DataAccess {
                 
             var param = factory.CreateParameter();
             param.ParameterName = !parameterName.StartsWith("@") ? string.Format("@{0}", parameterName) : parameterName;
-            if (value.GetType().IsArray)
+            if (value!= null && value.GetType().IsArray)
             {
                 //create the list
                 Array values = value as Array;

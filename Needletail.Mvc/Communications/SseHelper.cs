@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Needletail.Mvc.Communications
 {
@@ -18,6 +19,10 @@ namespace Needletail.Mvc.Communications
         /// </summary>
         static Dictionary<string, StreamWriter> clientStreams = new Dictionary<string, StreamWriter>();
 
+        /// <summary>
+        /// This holds a list of connections that are ready to send another message
+        /// </summary>
+        internal static List<string> ConnectionsMade = new List<string>();
 
         /// <summary>
         /// Adds a stream so we can send messages later
@@ -45,19 +50,45 @@ namespace Needletail.Mvc.Communications
                     return false;
             }
 
+            //remove the client id from the internal list
+            if (ConnectionsMade.Contains(remoteCall.ClientId))
+                ConnectionsMade.Remove(remoteCall.ClientId);
+
             //get the stream
             var st = clientStreams[remoteCall.ClientId];
-            try
+            lock (st)
             {
-                st.WriteLine(string.Concat ("data:", remoteCall.ToString() , "\n"));
-                st.Flush();
-            }
-            catch (Exception e)
-            { 
-                //its very likely that the client its has been disconnected if an exception occurs
-                return false;
+                try
+                {
+                    //always send an empty package first
+                    string data = string.Concat("data:", "-1", "\n");
+                    st.WriteLine(data);
+                    st.Flush();
+                    //then send the real message
+                    data= string.Concat("data:", remoteCall.ToString(), "\n");
+                    st.WriteLine(data);
+                    st.Flush();
+                    ConnectionsMade.Add(remoteCall.ClientId);
+                }
+                catch (Exception e)
+                {
+                    //its very likely that the client its has been disconnected if an exception occurs
+                    return false;
+                }
             }
             return true;
+        }
+
+        /// <summary>
+        /// called when the write finishes
+        /// </summary>
+        /// <param name="result"></param>
+        internal static void WriteAsyncReturn(IAsyncResult result)
+        {
+            //the id of the client to which the data was sent
+            var clientId = (string)result.AsyncState;
+            //add the client id to the connections made
+            ConnectionsMade.Add(clientId);
         }
 
         /// <summary>
@@ -76,6 +107,15 @@ namespace Needletail.Mvc.Communications
                     SendMessage(remoteCall,false);
                 }
             }
+        }
+
+        /// <summary>
+        /// determines if the client is online
+        /// </summary>
+        /// <param name="clientId">id of the client to check</param>
+        internal static bool ClientIsOnLine(string clientId)
+        {
+            return clientStreams.ContainsKey(clientId);
         }
     }
 }

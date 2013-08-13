@@ -12,6 +12,8 @@
         }
     },
     executeServerCall: function (e) {
+        if (e.data == '-1')
+            return;
         //convert string to json
         var call = eval("(" + e.data + ")");
         //the call is on e.data

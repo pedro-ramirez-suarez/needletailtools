@@ -12,6 +12,15 @@ namespace Needletail.Mvc.Communications
     public class RemoteExecution
     {
 
+        /// <summary>
+        /// determines if the client is online
+        /// </summary>
+        /// <param name="clientId">id of the client to check</param>
+        public static bool ClientIsOnLine(string clientId)
+        {
+            return SseHelper.ClientIsOnLine(clientId);
+        }
+
                
         /// <summary>
         /// Execute the given call on the client

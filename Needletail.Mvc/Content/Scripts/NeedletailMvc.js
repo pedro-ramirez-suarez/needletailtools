@@ -12,14 +12,21 @@
         }
     },
     executeServerCall: function (e) {
-        if (e.data == '-1')
-            return;
-        //convert string to json
-        var call = eval("(" + e.data + ")");
-        //the call is on e.data
-        var method = call.command;
-        var pars = call.parameters;
-        needleTail.executeFunction(method, window, pars);
+        //Needletail MVC sends a -1 string to activate the channel
+        try {
+
+            if (e.data == '-1')
+                return;
+            //convert string to json
+            var call = eval("(" + e.data + ")");
+            //the call is on e.data
+            var method = call.command;
+            var pars = call.parameters;
+            needleTail.executeFunction(method, window, pars);
+        }
+        catch (error) {
+            console.log(error);
+        }
 
     },
     connectionOpen: function (e) { /* run any code when the connection is opened */ },
@@ -34,7 +41,3 @@
         return context[func].apply(context, args);
     }
 };
-
-
-
-

@@ -39,7 +39,7 @@ namespace Needletail.Mvc
             {
                 RemoteExecution.ExecuteOnClient(this.Call, false);
                 //wait until the call has been made so the connection is not trunckated
-                int len = (int)(string.Concat("data:", this.Call.ToString(), "\n").Length / 10);
+                int len = (int)(string.Concat("data:", this.Call.ToString(), "\n").Length / 20);
                 while(true)
                 {
                     if (SseHelper.ConnectionsMade.Contains(this.Call.ClientId))

@@ -37,6 +37,9 @@ namespace Needletail.Mvc.Communications
             return id;
         }
 
+        /// <summary>
+        /// Sends a message to the proper client
+        /// </summary>
         internal static bool SendMessage(ClientCall remoteCall, bool throwException = true)
         {
             if (remoteCall == null)
@@ -77,18 +80,6 @@ namespace Needletail.Mvc.Communications
                 }
             }
             return true;
-        }
-
-        /// <summary>
-        /// called when the write finishes
-        /// </summary>
-        /// <param name="result"></param>
-        internal static void WriteAsyncReturn(IAsyncResult result)
-        {
-            //the id of the client to which the data was sent
-            var clientId = (string)result.AsyncState;
-            //add the client id to the connections made
-            ConnectionsMade.Add(clientId);
         }
 
         /// <summary>

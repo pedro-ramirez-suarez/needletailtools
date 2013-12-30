@@ -60,6 +60,8 @@ namespace Needletail.DataAccess.Engines {
         public override void ConfigureParameterForValue(DbParameter param, object value)
         {
             param.DbType = Converters.GetDBTypeFor(param.Value);
+            if (value == null || value == DBNull.Value)
+                return;
             if (value.GetType() == typeof(string) && value.ToString().Length > 4000)
                 (param as SqlCeParameter).SqlDbType = SqlDbType.NText;
             else if (value.GetType() == typeof(SqlGeography))

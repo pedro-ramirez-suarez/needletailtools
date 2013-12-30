@@ -11,6 +11,7 @@ using Needletail.DataAccess.Engines;
 using System.ComponentModel;
 using System.Data;
 using Needletail.DataAccess.Entities;
+using System.IO;
 
 namespace Needletail.DataAccess {
     public class DBTableDataSourceBase<E, K> : IDisposable, IDataSource<E, K> where E: class {
@@ -82,9 +83,32 @@ namespace Needletail.DataAccess {
                     break;
                 }
 
-            }            
+            }
+            string engineName = string.Format("Needletail.DataAccess.Engines.{0}Engine", provider);
+            Type engine = Type.GetType(engineName, false, true);
+            //if the engine was not found, search for all needletail assemblies
+            if (engine == null)
+            {
+                var di = new DirectoryInfo(".");
+                var files = di.GetFiles();
+                foreach(var f in files)
+                {
+                    if (!f.Name.ToLower().Contains("needletail") || f.Extension != ".dll")
+                        continue;
+                    var ass = Assembly.LoadFrom(f.FullName);
+                    //class, assembly
+                    var engineObj = ass.GetTypes().FirstOrDefault(t => t.FullName == engineName);
+                    if (engineObj != null)
+                    {
+                        engine = Type.GetType(engineObj.AssemblyQualifiedName, false, true);
+                        break;
+                    }
+                }
+            }
+            if(engine == null)
+                throw new Exception("Cannot find the engine type");
 
-            DBMSEngineHelper = Activator.CreateInstance(Type.GetType(string.Format("Needletail.DataAccess.Engines.{0}Engine", provider), false, true)) as IDBMSEngine;
+            DBMSEngineHelper = Activator.CreateInstance(engine) as IDBMSEngine;
             if (DBMSEngineHelper == null)
             {
                 throw new Exception("Database engine cannot be infered, be sure that you have a specific engine for this provider");

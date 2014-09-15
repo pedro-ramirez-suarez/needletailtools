@@ -50,9 +50,6 @@
       <Private>True</Private>
       <HintPath>..\..\cloudwarsgame\packages\Needletail.DataAccess.1.0.0.3\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
     </Reference>
-    <Reference Include="Needletail.DataAccess">
-      <HintPath>..\..\cloudwarsgame\packages\Needletail.DataAccess.1.0.0.3\lib\net40\Needletail.DataAccess.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
@@ -73,6 +70,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DataAccess\DataAccess.csproj">
+      <Project>{67f95add-615e-48a5-a833-4ddba4c364ea}</Project>
+      <Name>DataAccess</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

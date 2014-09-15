@@ -77,6 +77,11 @@ namespace Needletail.DataAccess.DataSources
             throw new NotImplementedException();
         }
 
+        public E GetSingle(object filter)
+        {
+            throw new NotImplementedException();
+        }
+
         public E GetSingle(object filter, FilterType filterType) {
             throw new NotImplementedException();
         }

@@ -155,6 +155,11 @@ namespace DataAccess.Repository.Hybrid
             return result2.Union(result1);
         }
 
+        public E GetSingle(object where)
+        {
+            return GetSingle(where: where, filterType: Needletail.DataAccess.Engines.FilterType.AND);
+        }
+
         public E GetSingle(object where, Needletail.DataAccess.Engines.FilterType filterType = Needletail.DataAccess.Engines.FilterType.AND)
         {
             var result1 = _SqlCEContext.GetSingle(where, filterType);

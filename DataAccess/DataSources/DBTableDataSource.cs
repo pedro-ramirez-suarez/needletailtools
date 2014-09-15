@@ -14,7 +14,8 @@ using Needletail.DataAccess.Entities;
 using System.IO;
 
 namespace Needletail.DataAccess {
-    public class DBTableDataSourceBase<E, K> : IDisposable, IDataSource<E, K> where E: class {
+    public class DBTableDataSourceBase<E, K> : IDisposable, IDataSource<E, K> where E: class
+    {
 
 
         #region Events
@@ -478,14 +479,17 @@ namespace Needletail.DataAccess {
             return GetMany(where, FilterType.AND, orderBy, null);
         }
 
-
+        public E GetSingle(object where)
+        {
+            return GetSingle(where: where, filterType: FilterType.AND);
+        }
 
         public E GetSingle(string where, Dictionary<string,object> args) {
             var singleE = GetMany(where,string.Empty,args,1);
             return singleE.FirstOrDefault();
         }
 
-        public E GetSingle(object where,FilterType filterType = FilterType.AND) {
+        public E GetSingle(object where,FilterType filterType) {
             var singleE = GetMany(where,filterType,null,1);
             return singleE.FirstOrDefault();
         }

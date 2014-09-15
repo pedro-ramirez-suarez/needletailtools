@@ -21,6 +21,7 @@ namespace Needletail.DataAccess {
         System.Collections.Generic.IEnumerable<E> GetMany(string where, string orderBy, System.Collections.Generic.Dictionary<string, object> args, int? topN);
         System.Collections.Generic.IEnumerable<DynamicEntity> Join(string selectColumns, string joinQuery, string whereQuery, string orderBy, System.Collections.Generic.Dictionary<string, object> args);
         IEnumerable<T> JoinGetTyped<T>(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args);
+        E GetSingle(object where);
         E GetSingle(object where, FilterType filterType);
         E GetSingle(string where, System.Collections.Generic.Dictionary<string, object> args);
         K Insert(E newItem);

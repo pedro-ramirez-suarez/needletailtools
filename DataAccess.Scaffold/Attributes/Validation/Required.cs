@@ -9,10 +9,10 @@ namespace DataAccess.Scaffold.Attributes
     [System.AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class Required : NeedletailAttribute
     {
-        public Required(bool required)
+        public Required()
             : base("This field is required" , Constants.ErrorClass)
         {
-            this.IsRequired= required;
+            this.IsRequired= true;
         }
 
         public Required(bool required,string errorMessage, string errorClass)

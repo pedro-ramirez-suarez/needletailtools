@@ -10,17 +10,15 @@ namespace DataAccess.Scaffold.Attributes
     public class SelectFrom: Attribute
     {
 
-        public SelectFrom(string foreignKey, string referencedTable, string referencedKey, string displayField)
+        public SelectFrom(string referencedTable, string referencedField, string displayField)
         {
-            this.ForeignKey = foreignKey;
             this.ReferencedTable = referencedTable;
-            this.ReferencedKey = referencedKey;
+            this.ReferencedField = referencedField;
             this.DisplayField = displayField;
         }
 
-        public string ForeignKey { get; private set; }
         public string ReferencedTable { get; private set; }
-        public string ReferencedKey { get; private set; }
+        public string ReferencedField { get; private set; }
         public string DisplayField { get; private set; }
     }
 }

@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<model>
+  <entity name="User">
+    <fields>
+      <Id></Id>
+      <Name required="true"></Name>
+      <Email validator="emailAddress"></Email>
+      <Age validator="numeric"></Age>
+      
+      <SubscriptionDate validator="date"></SubscriptionDate>
+      <Proyects validator="between">
+        <Validator Min="1" Max="10"></Validator>
+      </Proyects>
+      <Password validator="regexp">
+        <Validator RegExp="^[a-zA-Z]\w{3,14}$"></Validator>
+      </Password>
+      <DepartmentId SelectFrom="DepartmentList">
+        <SelectFrom DisplayField="DepartmentName" ReferencedField="Id"></SelectFrom>
+      </DepartmentId>
+      <AddressId hasOne="Address">
+        <HasOne ReferencedField="Id"></HasOne>
+      </AddressId>
+    </fields>
+  </entity>
+  <SelectFrom name="DepartmentList">
+    <entity>
+      <fields>
+        <Id></Id>
+        <DepartmentName></DepartmentName>
+        <ParentDepartmentId></ParentDepartmentId>
+      </fields>
+    </entity>
+  </SelectFrom>
+  
+  <hasOne name="Address">
+    <entity>
+      <fields>
+        <Id></Id>
+        <Street required="true" validator="MaxLen">
+          <Validator Max="150"></Validator>
+        </Street>
+        <ZipCode validator="zipCode"></ZipCode>
+        <Phone validator="phone"></Phone>  
+      </fields>
+    </entity>
+  </hasOne>
+  
+  <hasMany name="Project">
+    <entity >
+      <fields>
+        <Id></Id>
+        <Name  required="true"></Name>
+        <NumerOfParticipants validator="numeric"></NumerOfParticipants>
+        <StartDate validator="date"></StartDate>
+      </fields>  
+    </entity>
+  </hasMany>
+</model>

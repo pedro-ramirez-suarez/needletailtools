@@ -10,15 +10,13 @@ namespace DataAccess.Scaffold.Attributes
     public class HasOne : Attribute
     {
 
-        public HasOne(string foreignKey, string referencedTable, string referencedKey)
+        public HasOne( string referencedTable, string referencedField)
         {
-            this.ForeignKey = foreignKey;
             this.ReferencedTable = referencedTable;
-            this.ReferencedKey = referencedKey;
+            this.ReferencedField = referencedField;
         }
 
-        public string ForeignKey { get; private set; }
         public string ReferencedTable { get; private set; }
-        public string ReferencedKey { get; private set; }
+        public string ReferencedField { get; private set; }
     }
 }

@@ -4,14 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Generator
+namespace DataAccess.Scaffold.Attributes 
 {
-    class Program
+    public class NeedletailRelationAttribute : ForeignKeyAttribute
     {
-        static void Main(string[] args)
-        {
-
-            //instantiate a type
-        }
     }
 }

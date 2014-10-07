@@ -35,7 +35,7 @@ namespace Needletail.DataAccess.Engines {
 
         public override string GetQueryTemplateForTop(string columns, string from, string where, string orderBy, int? topN)
         {
-            return string.Format("SELECT {0} {1} FROM {2} {3} {4}",
+            return string.Format("SELECT {0} {1} FROM [{2}] {3} {4}",
                                              topN.HasValue ? string.Format(" TOP {0}", topN.Value) : "",
                                              columns,
                                              from,

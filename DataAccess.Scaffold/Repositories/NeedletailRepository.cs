@@ -57,7 +57,7 @@ namespace DataAccess.Scaffold.Repositories
 
         public bool Delete(object where, Needletail.DataAccess.Engines.FilterType filterType)
         {
-            throw new NotImplementedException();
+            return this.dataSource.Delete(where: where, filterType: filterType);
         }
 
         public bool Delete(object where)

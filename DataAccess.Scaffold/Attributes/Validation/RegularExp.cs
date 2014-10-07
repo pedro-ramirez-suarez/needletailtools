@@ -35,5 +35,17 @@ namespace DataAccess.Scaffold.Attributes
                 return "regexp";
             }
         }
+
+        private Dictionary<string, string> validatorDetails;
+        public override Dictionary<string, string> ValidatorDetails
+        {
+            get
+            {
+                if (validatorDetails == null)
+                    validatorDetails = new Dictionary<string, string>();
+                validatorDetails.Add("RegExp",RegularExpression);         
+                return validatorDetails;
+            }
+        }
     }
 }

@@ -3,14 +3,14 @@
   <entity name="User">
     <fields>
       <Id></Id>
-      <Name required="true"></Name>
-      <Email validator="emailAddress"></Email>
+      <Name validator="required"></Name>
+      <Email validator="emailAddress required"></Email>
       <Age validator="numeric"></Age>
       
       <SubscriptionDate validator="date"></SubscriptionDate>
-      <Proyects validator="between">
+      <Projects validator="between">
         <Validator Min="1" Max="10"></Validator>
-      </Proyects>
+      </Projects>
       <Password validator="regexp">
         <Validator RegExp="^[a-zA-Z]\w{3,14}$"></Validator>
       </Password>
@@ -22,8 +22,8 @@
       </AddressId>
     </fields>
   </entity>
-  <SelectFrom name="DepartmentList">
-    <entity>
+  <SelectFrom >
+    <entity listName="DepartmentList" name="Department">
       <fields>
         <Id></Id>
         <DepartmentName></DepartmentName>
@@ -32,8 +32,8 @@
     </entity>
   </SelectFrom>
   
-  <hasOne name="Address">
-    <entity>
+  <hasOne >
+    <entity name="Address">
       <fields>
         <Id></Id>
         <Street required="true" validator="MaxLen">
@@ -45,12 +45,12 @@
     </entity>
   </hasOne>
   
-  <hasMany name="Project">
-    <entity >
+  <hasMany>
+    <entity name="Project">
       <fields>
         <Id></Id>
         <Name  required="true"></Name>
-        <NumerOfParticipants validator="numeric"></NumerOfParticipants>
+        <Budget validator="numeric"></Budget>
         <StartDate validator="date"></StartDate>
       </fields>  
     </entity>

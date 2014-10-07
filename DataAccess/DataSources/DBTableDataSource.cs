@@ -42,18 +42,36 @@ namespace Needletail.DataAccess {
         TypeConverter converter;
 
         /// <summary>
+        /// Default ctor
+        /// </summary>
+        public DBTableDataSourceBase()
+        {
+            DBTableDataSourceInitializer("Default", typeof(E).Name);
+        }
+
+
+        /// <summary>
         /// Ctor
         /// </summary>
         /// <param name="connectionString"></param>
         /// <param name="tableName"></param>
-        public DBTableDataSourceBase(string connectionString, string tableName) {
-            if (string.IsNullOrWhiteSpace(connectionString)) {
+        public DBTableDataSourceBase(string connectionString, string tableName) 
+        {
+            DBTableDataSourceInitializer(connectionString, tableName);
+        }
+        
+
+        private void DBTableDataSourceInitializer(string connectionString, string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
                 throw new ArgumentNullException("connectionString");
             }
-            if (string.IsNullOrWhiteSpace(tableName)) {
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
                 throw new ArgumentNullException("tableName");
             }
-            
+
             ConnectionString = connectionString;
             TableName = tableName;
 
@@ -62,7 +80,7 @@ namespace Needletail.DataAccess {
             {
                 throw new Exception("connection string does not exists");
             }
-            
+
 
             //prepare the factory
             factory = DbProviderFactories.GetFactory(cn.ProviderName);
@@ -70,7 +88,7 @@ namespace Needletail.DataAccess {
             {
                 throw new Exception("Cannot get provider");
             }
-            
+
             //get the provider
             var parts = cn.ProviderName.Split(new char[] { '.' });
             string provider = string.Empty;
@@ -92,7 +110,7 @@ namespace Needletail.DataAccess {
             {
                 var di = new DirectoryInfo(".");
                 var files = di.GetFiles();
-                foreach(var f in files)
+                foreach (var f in files)
                 {
                     if (!f.Name.ToLower().Contains("needletail") || f.Extension != ".dll")
                         continue;
@@ -106,7 +124,7 @@ namespace Needletail.DataAccess {
                     }
                 }
             }
-            if(engine == null)
+            if (engine == null)
                 throw new Exception("Cannot find the engine type");
 
             DBMSEngineHelper = Activator.CreateInstance(engine) as IDBMSEngine;
@@ -116,8 +134,8 @@ namespace Needletail.DataAccess {
             }
 
 
-            
-            
+
+
 
             //check if the lock exists, if not, create id
             if (DBMSEngineHelper.NeedLockOnConnection)
@@ -141,9 +159,11 @@ namespace Needletail.DataAccess {
 
             //find the key
             var props = typeof(E).GetProperties();
-            foreach (var p in props) {
+            foreach (var p in props)
+            {
                 var attrs = p.GetCustomAttributes(typeof(TableKeyAttribute), true);
-                if (attrs.Length > 0) {
+                if (attrs.Length > 0)
+                {
                     Key = p.Name;
                     if ((attrs[0] as TableKeyAttribute).CanInsertKey)
                     {
@@ -154,14 +174,13 @@ namespace Needletail.DataAccess {
             }
             this.EProperties = props;
 
-            
+
 
             lock (connection)
             {
                 DBMSEngineHelper.PrepareEngine(cn.ConnectionString, connection);
             }
         }
-        
 
         public K Insert(E newItem) {
             var cmd = factory.CreateCommand();
@@ -171,7 +190,7 @@ namespace Needletail.DataAccess {
             //Build the query
             StringBuilder mainQuery = new StringBuilder();
             StringBuilder valsQuery = new StringBuilder();
-            mainQuery.AppendFormat("INSERT INTO {0} (", TableName);
+            mainQuery.AppendFormat("INSERT INTO [{0}] (", TableName);
             valsQuery.Append("VALUES (");
             for (int x = 0; x < this.EProperties.Length; x++) {
                 var p = this.EProperties[x];                
@@ -207,7 +226,7 @@ namespace Needletail.DataAccess {
                 var newId = cmd.ExecuteScalar();
                 if (newId == null)
                 {
-                    cmd.CommandText = " SELECT @@IDENTITY From " + TableName; //To select the indentity
+                    cmd.CommandText = " SELECT @@IDENTITY From [" + TableName + "]"; //To select the indentity
                     if (BeforeRunCommand != null) BeforeRunCommand(cmd);
                     cmd.Prepare();
                     newId = cmd.ExecuteScalar();
@@ -242,7 +261,7 @@ namespace Needletail.DataAccess {
                 cmd.Connection = connection;
                 //Set the command
                 orderBy = !string.IsNullOrWhiteSpace(orderBy) ? string.Format(" ORDER BY {0}", orderBy) : string.Empty;
-                cmd.CommandText = string.Format("SELECT * FROM {0} {1}", TableName, orderBy);
+                cmd.CommandText = string.Format("SELECT * FROM [{0}] {1}", TableName, orderBy);
                 return CreateListFromCommand(cmd);
             }
         }
@@ -276,7 +295,7 @@ namespace Needletail.DataAccess {
                     throw new Exception("Cannot determine the value for the primary Key");
                 }
 
-                uq.AppendFormat(" WHERE {0} = @{0}", this.Key);
+                uq.AppendFormat(" WHERE [{0}] = @{0}", this.Key);
                 //execute it
                 cmd.CommandText = uq.ToString();
                 if (BeforeRunCommand != null) BeforeRunCommand(cmd);
@@ -339,7 +358,7 @@ namespace Needletail.DataAccess {
             lock (connection)
             {
                 cmd.Connection = connection;
-                string dq = string.Format("DELETE FROM {0} ", this.TableName);
+                string dq = string.Format("DELETE FROM [{0}] ", this.TableName);
 
                 var wq = WhereBuilder(where, cmd, filterType.ToString());
                 if (string.IsNullOrWhiteSpace(wq.ToString()))
@@ -369,7 +388,7 @@ namespace Needletail.DataAccess {
             {
                 cmd.Connection = connection;
                 //Set the command
-                cmd.CommandText = string.Format("{0} FROM {1} {2} {3}", select, this.TableName, string.IsNullOrWhiteSpace(where) ? "" : string.Format(" WHERE {0} ", where), string.IsNullOrWhiteSpace(orderBy) ? "" : string.Format(" Order By {0} ", orderBy));
+                cmd.CommandText = string.Format("{0} FROM [{1}] {2} {3}", select, this.TableName, string.IsNullOrWhiteSpace(where) ? "" : string.Format(" WHERE {0} ", where), string.IsNullOrWhiteSpace(orderBy) ? "" : string.Format(" Order By {0} ", orderBy));
 
                 return CreateListFromCommand(cmd);
             }
@@ -512,7 +531,7 @@ namespace Needletail.DataAccess {
             lock (connection)
             {
                 cmd.Connection = connection;
-                cmd.CommandText = string.Format("SELECT {0} FROM {1} {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
+                cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
                 //add the parameters
                 AddParameters(cmd, args);
 
@@ -538,7 +557,7 @@ namespace Needletail.DataAccess {
             lock (connection)
             {
                 cmd.Connection = connection;
-                cmd.CommandText = string.Format("SELECT {0} FROM {1} {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ",whereQuery), orderBy);
+                cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ",whereQuery), orderBy);
                 //add the parameters
                 AddParameters(cmd, args);
 
@@ -553,7 +572,7 @@ namespace Needletail.DataAccess {
 
         private StringBuilder GetUpdateString(object item, DbCommand cmd, ref bool keyFound) {
             var props = item.GetType().GetProperties();
-            StringBuilder uq = new StringBuilder(string.Format("UPDATE {0} SET ", this.TableName));
+            StringBuilder uq = new StringBuilder(string.Format("UPDATE [{0}] SET ", this.TableName));
             for(int x= 0; x< props.Length; x++) {
                 var p = props[x];
                 //do not update the key

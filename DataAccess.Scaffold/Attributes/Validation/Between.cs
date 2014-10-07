@@ -34,5 +34,18 @@ namespace DataAccess.Scaffold.Attributes
                 return "between";
             }
         }
+
+        private Dictionary<string, string> validatorDetails;
+        public override Dictionary<string, string> ValidatorDetails
+        {
+            get 
+            {
+                if(validatorDetails == null)
+                    validatorDetails = new Dictionary<string, string>();
+                validatorDetails.Add("Max",MaxValue.ToString());
+                validatorDetails.Add("Min", MinValue.ToString());
+                return validatorDetails;
+            }
+        }
     }
 }

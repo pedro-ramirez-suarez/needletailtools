@@ -6,16 +6,19 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Scaffold.Attributes
 {
-    [System.AttributeUsage(AttributeTargets.Field | AttributeTargets.Property , AllowMultiple = true)]
-    public class HasOne : Attribute
+    [System.AttributeUsage(AttributeTargets.Class | AttributeTargets.Property, AllowMultiple = true)]
+    public class HasOne : NeedletailRelationAttribute
     {
 
-        public HasOne( string referencedTable, string referencedField)
+        public HasOne(string localObject , string foreignKey, string referencedTable, string referencedField)
         {
+            this.LocalObject = localObject;
+            this.ForeignKey = foreignKey;
             this.ReferencedTable = referencedTable;
             this.ReferencedField = referencedField;
         }
 
+        public string LocalObject { get; private set; }
         public string ReferencedTable { get; private set; }
         public string ReferencedField { get; private set; }
     }

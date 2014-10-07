@@ -30,5 +30,17 @@ namespace DataAccess.Scaffold.Attributes
                 return "min";
             }
         }
+
+        private Dictionary<string, string> validatorDetails;
+        public override Dictionary<string, string> ValidatorDetails
+        {
+            get
+            {
+                if (validatorDetails == null)
+                    validatorDetails = new Dictionary<string, string>();
+                validatorDetails.Add("Min", Value.ToString());
+                return validatorDetails;
+            }
+        }
     }
 }

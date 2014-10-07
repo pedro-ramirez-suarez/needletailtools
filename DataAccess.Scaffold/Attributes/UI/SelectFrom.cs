@@ -6,17 +6,20 @@ using System.Threading.Tasks;
 
 namespace DataAccess.Scaffold.Attributes
 {
-    [System.AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = true)]
-    public class SelectFrom: Attribute
+    [System.AttributeUsage(AttributeTargets.Class | AttributeTargets.Property, AllowMultiple = true)]
+    public class SelectFrom : NeedletailUIAttribute
     {
 
-        public SelectFrom(string referencedTable, string referencedField, string displayField)
+        public SelectFrom(string localList, string foreignKey,string referencedTable, string referencedField, string displayField)
         {
+            this.LocalList = localList;
+            this.ForeignKey = foreignKey;
             this.ReferencedTable = referencedTable;
             this.ReferencedField = referencedField;
             this.DisplayField = displayField;
         }
 
+        public string LocalList { get; private set; }
         public string ReferencedTable { get; private set; }
         public string ReferencedField { get; private set; }
         public string DisplayField { get; private set; }

@@ -28,5 +28,10 @@ namespace DataAccess.Scaffold.Attributes
                 return "phone";
             }
         }
+
+        public override Dictionary<string, string> ValidatorDetails
+        {
+            get { return new Dictionary<string, string>(); }
+        }
     }
 }

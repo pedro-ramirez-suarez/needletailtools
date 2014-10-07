@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,11 @@ namespace DataAccess.Scaffold.Attributes
             {
                 return "notEmpty";
             }
+        }
+
+        public override Dictionary<string, string> ValidatorDetails
+        {
+            get { return new Dictionary<string, string>(); }
         }
     }
 }

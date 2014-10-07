@@ -29,5 +29,9 @@ namespace DataAccess.Scaffold.Attributes
             }
         }
 
+        public override Dictionary<string, string> ValidatorDetails
+        {
+            get { return new Dictionary<string, string>(); }
+        }
     }
 }

@@ -66,6 +66,8 @@ namespace DataAccess.Scaffold.ViewModels
                 var pars = new Dictionary<string, object>();
                 pars.Add("id", primaryKey);
                 record = context.GetSingle(string.Format("{0}=@id", key.Name), pars);
+                if (record == null)
+                    record = Activator.CreateInstance(i.PropertyType);
                 i.SetValue(me, record);
                 context.Dispose();
             }
@@ -86,8 +88,7 @@ namespace DataAccess.Scaffold.ViewModels
                 context.Dispose();
             }
 
-            if (record == null)
-                return;
+            
             //Fill HasOne
             attribs = new List<object>();
             foreach (var e in vmAttributes)
@@ -105,7 +106,10 @@ namespace DataAccess.Scaffold.ViewModels
                 pars.Add("foreignKey", fkVal);
                 string where = string.Format("{0} = @foreignKey", s.ReferencedField);
                 dynamic list = context.GetMany(where, string.Empty, pars, 0, int.MaxValue);
-                item.SetValue(me, list[0]);
+                if (list.Count > 0)
+                    item.SetValue(me, list[0]);
+                else
+                    item.SetValue(me, Activator.CreateInstance(item.PropertyType));
                 context.Dispose();
             }
 
@@ -176,12 +180,16 @@ namespace DataAccess.Scaffold.ViewModels
             return context;
         }
 
-        private bool IsNew(object entity)
+        private bool IsNew(object entity, dynamic context)
         {
             var key = entity.GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttributes(typeof(TableKeyAttribute), false) != null);
             object keyValue = key.GetValue(entity);
-
-            if (keyValue == Activator.CreateInstance(key.PropertyType))
+            //Check if the record already exists
+            var pars = new Dictionary<string, object>();
+            pars.Add("id", keyValue);
+            string sql = string.Format("Select count(*) from [{0}] Where {1} = @id", entity.GetType().Name,key.Name);
+            int total = context.ExecuteScalar<int>(sql,pars);
+            if (total <=0 )
                 return true;
             return false;
 
@@ -221,7 +229,7 @@ namespace DataAccess.Scaffold.ViewModels
                 dynamic context = CreateDataContextFor(i.PropertyType, out key);
                 record = i.GetValue(me);
                 //Check if is an add or update
-                if (IsNew(record))
+                if (IsNew(record,context))
                     context.Insert(record);
                 else
                     context.Update(record);
@@ -241,7 +249,7 @@ namespace DataAccess.Scaffold.ViewModels
                 var item = props.FirstOrDefault(p => p.Name == s.LocalObject);
                 dynamic context = CreateDataContextFor(item.PropertyType, out key);
                 record = item.GetValue(me);
-                if (IsNew(record))
+                if (IsNew(record,context))
                     context.Insert(record);
                 else
                     context.Update(record);

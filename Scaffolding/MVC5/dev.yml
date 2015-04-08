@@ -1,0 +1,13 @@
+website_port: 3000
+website_deploy_directory: c:\iisexpress\__NAME__
+website_port_load_balanced_1: 4000
+website_deploy_directory_load_balanced_1: c:\iisexpress\__NAME___4000
+website_port_load_balanced_2: 5000
+website_deploy_directory_load_balanced_2: c:\iisexpress\__NAME___5000
+solution_name: __NAME__ #just the name, no .sln extension
+mvc_project: __NAME__ #just the folder name, no .csproj extension
+test_project: __NAME__.Tests #just the folder name, no .csproj extension
+test_runner: ./packages/nspec.0.9.68/tools/NSpecRunner.exe
+iis_express: C:\Program Files (x86)\IIS Express
+database_name: __NAME__
+database_server: (local)

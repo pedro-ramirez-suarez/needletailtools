@@ -12,9 +12,12 @@ using System.ComponentModel;
 using System.Data;
 using Needletail.DataAccess.Entities;
 using System.IO;
+using System.Threading.Tasks;
+using Needletail.DataAccess.Helper;
 
 namespace Needletail.DataAccess {
-    public class DBTableDataSourceBase<E, K> : IDisposable, IDataSource<E, K> where E: class
+    public class DBTableDataSourceBase<E, K> : IDisposable, IDataSourceAsync<E, K>, IDataSource<E, K> 
+        where E : class
     {
 
 
@@ -182,27 +185,31 @@ namespace Needletail.DataAccess {
             }
         }
 
-        public K Insert(E newItem) {
+        public async Task<K> InsertAsync(E newItem)
+        {
             var cmd = factory.CreateCommand();
             cmd.Connection = connection;
             bool insertKey = false;
-            object keyValue=null;
+            object keyValue = null;
             //Build the query
             StringBuilder mainQuery = new StringBuilder();
             StringBuilder valsQuery = new StringBuilder();
             mainQuery.AppendFormat("INSERT INTO [{0}] (", TableName);
             valsQuery.Append("VALUES (");
-            for (int x = 0; x < this.EProperties.Length; x++) {
-                var p = this.EProperties[x];                
+            for (int x = 0; x < this.EProperties.Length; x++)
+            {
+                var p = this.EProperties[x];
                 //do not include the ID
-                if (p.Name != this.Key || InsertKey) {                    
+                if (p.Name != this.Key || InsertKey)
+                {
                     //set both
                     mainQuery.Append(p.Name);
                     valsQuery.AppendFormat("@{0}", p.Name);
                     //add the parameter
                     AddParameter(p.Name, p.GetValue(newItem, null), cmd);
 
-                    if (x <= this.EProperties.Length - 2) {
+                    if (x <= this.EProperties.Length - 2)
+                    {
                         mainQuery.Append(",");
                         valsQuery.Append(",");
                     }
@@ -214,41 +221,109 @@ namespace Needletail.DataAccess {
             mainQuery.Append(")");//Close the values
             valsQuery.Append(")");//Close the values
             mainQuery.AppendFormat(" {0}", valsQuery.ToString()); // if needed
-            
+
             //execute it
             cmd.CommandText = mainQuery.ToString();
-            lock (connection)
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            connection.Open();
+            if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            cmd.Prepare();
+            var newId = await cmd.ExecuteScalarAsync();
+            
+            if (newId == null)
             {
-                if (connection.State != ConnectionState.Closed) connection.Close();
-                connection.Open();
+                cmd.CommandText = " SELECT @@IDENTITY From [" + TableName + "]"; //To select the indentity
                 if (BeforeRunCommand != null) BeforeRunCommand(cmd);
                 cmd.Prepare();
-                var newId = cmd.ExecuteScalar();
-                if (newId == null)
+                newId =  await cmd.ExecuteScalarAsync(); //fix this
+                    
+                if (newId.ToString() == string.Empty && InsertKey)
                 {
-                    cmd.CommandText = " SELECT @@IDENTITY From [" + TableName + "]"; //To select the indentity
-                    if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-                    cmd.Prepare();
-                    newId = cmd.ExecuteScalar();
-                    if (newId.ToString() == string.Empty && InsertKey)
-                    {
-                        newId = keyValue;
-                    }
+                    newId = keyValue;
                 }
-                connection.Close();
-
-                if (newId == DBNull.Value)
-                    return default(K);
-                return (K)Convert.ChangeType(newId, typeof(K)); 
             }
+            connection.Close();
+
+            if (newId == DBNull.Value)
+                return default(K);
+            return (K)Convert.ChangeType(newId, typeof(K));
+
+        }
+       
+        public K Insert(E newItem) {
+            return AsyncHelpers.RunSync<K>(() => InsertAsync(newItem)); ;
+            
+            //var cmd = factory.CreateCommand();
+            //cmd.Connection = connection;
+            //bool insertKey = false;
+            //object keyValue=null;
+            ////Build the query
+            //StringBuilder mainQuery = new StringBuilder();
+            //StringBuilder valsQuery = new StringBuilder();
+            //mainQuery.AppendFormat("INSERT INTO [{0}] (", TableName);
+            //valsQuery.Append("VALUES (");
+            //for (int x = 0; x < this.EProperties.Length; x++) {
+            //    var p = this.EProperties[x];                
+            //    //do not include the ID
+            //    if (p.Name != this.Key || InsertKey) {                    
+            //        //set both
+            //        mainQuery.Append(p.Name);
+            //        valsQuery.AppendFormat("@{0}", p.Name);
+            //        //add the parameter
+            //        AddParameter(p.Name, p.GetValue(newItem, null), cmd);
+
+            //        if (x <= this.EProperties.Length - 2) {
+            //            mainQuery.Append(",");
+            //            valsQuery.Append(",");
+            //        }
+
+            //        if (p.Name == this.Key)
+            //            keyValue = p.GetValue(newItem, null);
+            //    }
+            //}
+            //mainQuery.Append(")");//Close the values
+            //valsQuery.Append(")");//Close the values
+            //mainQuery.AppendFormat(" {0}", valsQuery.ToString()); // if needed
+            
+            ////execute it
+            //cmd.CommandText = mainQuery.ToString();
+            //lock (connection)
+            //{
+            //    if (connection.State != ConnectionState.Closed) connection.Close();
+            //    connection.Open();
+            //    if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            //    cmd.Prepare();
+            //    var newId = cmd.ExecuteScalar();
+            //    if (newId == null)
+            //    {
+            //        cmd.CommandText = " SELECT @@IDENTITY From [" + TableName + "]"; //To select the indentity
+            //        if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            //        cmd.Prepare();
+            //        newId = cmd.ExecuteScalar();
+            //        if (newId.ToString() == string.Empty && InsertKey)
+            //        {
+            //            newId = keyValue;
+            //        }
+            //    }
+            //    connection.Close();
+
+            //    if (newId == DBNull.Value)
+            //        return default(K);
+            //    return (K)Convert.ChangeType(newId, typeof(K)); 
+            //}
         }
 
-        public IEnumerable<E> GetAll() {
-
-            return GetAll(string.Empty);
+        public async Task<IEnumerable<E>> GetAllAsync()
+        {
+            return await GetAllAsync(string.Empty);
         }
 
-        private IEnumerable<E> GetAll(string orderBy, DbCommand cmd = null)
+        public IEnumerable<E> GetAll()
+        {
+            return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetAllAsync());;
+        }
+
+        private async Task<IEnumerable<E>> GetAllAsync(string orderBy, DbCommand cmd = null)
         {
 
             IList<E> list = new List<E>();
@@ -256,21 +331,59 @@ namespace Needletail.DataAccess {
             {
                 cmd = factory.CreateCommand();
             }
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                //Set the command
-                orderBy = !string.IsNullOrWhiteSpace(orderBy) ? string.Format(" ORDER BY {0}", orderBy) : string.Empty;
-                cmd.CommandText = string.Format("SELECT * FROM [{0}] {1}", TableName, orderBy);
-                return CreateListFromCommand(cmd);
-            }
+            
+            cmd.Connection = connection;
+            //Set the command
+            orderBy = !string.IsNullOrWhiteSpace(orderBy) ? string.Format(" ORDER BY {0}", orderBy) : string.Empty;
+            cmd.CommandText = string.Format("SELECT * FROM [{0}] {1}", TableName, orderBy);
+            return await CreateListFromCommandAsync(cmd);
         }
 
+        public async Task<IEnumerable<E>> GetAllAsync(object orderBy)
+        {
+            var cmd = factory.CreateCommand();
+            StringBuilder oq;
+            if (orderBy.GetType() == typeof(string))
+                oq = this.OrderByBuilder(orderBy, cmd);
+            else
+                oq = new StringBuilder();
+            
+            return await GetAllAsync(oq.ToString());
+        }
+        
         public IEnumerable<E> GetAll(object orderBy)
         {
             var cmd = factory.CreateCommand();
             StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
-            return GetAll(oq.ToString());
+            return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetAllAsync(oq.ToString()));
+        }
+
+        public async Task<bool> UpdateAsync(object item)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException("item cannot be null");
+            }
+            var cmd = factory.CreateCommand();
+            cmd.Connection = connection;
+            bool keyFound = false;
+            var uq = GetUpdateString(item, cmd, ref keyFound);
+            //Add the where
+            if (!keyFound)
+            {
+                throw new Exception("Cannot determine the value for the primary Key");
+            }
+
+            uq.AppendFormat(" WHERE [{0}] = @{0}", this.Key);
+            //execute it
+            cmd.CommandText = uq.ToString();
+            if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            connection.Open();
+            cmd.Prepare();
+            var result = (int)await cmd.ExecuteNonQueryAsync();
+            connection.Close();
+            return result > 0;
         }
 
 
@@ -280,71 +393,112 @@ namespace Needletail.DataAccess {
         /// <param name="item"></param>
         /// <returns></returns>
         public bool Update(object item) {
-            if (item == null) {
-                throw new ArgumentNullException("item cannot be null");
-            }
-            var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                bool keyFound = false;
-                var uq = GetUpdateString(item, cmd, ref keyFound);
-                //Add the where
-                if (!keyFound)
-                {
-                    throw new Exception("Cannot determine the value for the primary Key");
-                }
+            return AsyncHelpers.RunSync<bool>(() => UpdateAsync(item));
 
-                uq.AppendFormat(" WHERE [{0}] = @{0}", this.Key);
-                //execute it
-                cmd.CommandText = uq.ToString();
-                if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-                if (connection.State != ConnectionState.Closed) connection.Close();
-                connection.Open();
-                cmd.Prepare();
-                var result = (int)cmd.ExecuteNonQuery();
-                connection.Close();
-                return result > 0;
-            }
+           // if (item == null) {
+           //     throw new ArgumentNullException("item cannot be null");
+           // }
+           // var cmd = factory.CreateCommand();
+           // //lock (connection)
+           // //{
+           //     cmd.Connection = connection;
+           //     bool keyFound = false;
+           //     var uq = GetUpdateString(item, cmd, ref keyFound);
+           //     //Add the where
+           //     if (!keyFound)
+           //     {
+           //         throw new Exception("Cannot determine the value for the primary Key");
+           //     }
+
+           //     uq.AppendFormat(" WHERE [{0}] = @{0}", this.Key);
+           //     //execute it
+           //     cmd.CommandText = uq.ToString();
+           //     if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+           //     if (connection.State != ConnectionState.Closed) connection.Close();
+           //     connection.Open();
+           //     cmd.Prepare();
+           //     var result = (int)cmd.ExecuteNonQuery();
+           //     connection.Close();
+           //     return result > 0;
+           //// }
         }
 
+        public async Task<bool> UpdateWithWhereAsync(object values, object where)
+        {
+            return await UpdateWithWhereAsync(values, where, FilterType.AND);
+        }
         public bool UpdateWithWhere(object values, object where)
         {
             return UpdateWithWhere(values,where, FilterType.AND);
         }
 
-
-        public bool UpdateWithWhere(object values, object where,FilterType filterType ) {
-            if (values == null) {
+        public async Task<bool> UpdateWithWhereAsync(object values, object where, FilterType filterType) 
+        {
+            if (values == null)
+            {
                 throw new ArgumentNullException("values cannot be null");
             }
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                bool keyFound = false;
-                var uq = GetUpdateString(values, cmd, ref keyFound);
-                //create the where
-                var wb = WhereBuilder(where, cmd, filterType.ToString());
-                //add it to the rest of the query
-                uq.AppendFormat(" {0} {1} ", string.IsNullOrWhiteSpace(wb.ToString()) ? "" : "WHERE", wb);
+            cmd.Connection = connection;
+            bool keyFound = false;
+            var uq = GetUpdateString(values, cmd, ref keyFound);
+            //create the where
+            var wb = WhereBuilder(where, cmd, filterType.ToString());
+            //add it to the rest of the query
+            uq.AppendFormat(" {0} {1} ", string.IsNullOrWhiteSpace(wb.ToString()) ? "" : "WHERE", wb);
 
-                //execute it
-                cmd.CommandText = uq.ToString();
-                if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-                if (connection.State != ConnectionState.Closed) connection.Close();
-                connection.Open();
-                cmd.Prepare();
-                var result = (int)cmd.ExecuteNonQuery();
-                connection.Close();
-                return result > 0;
-            }
+            //execute it
+            cmd.CommandText = uq.ToString();
+            if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            connection.Open();
+            cmd.Prepare();
+            var result = (int)await cmd.ExecuteNonQueryAsync();
+            connection.Close();
+            return result > 0;
         }
 
+        public bool UpdateWithWhere(object values, object where,FilterType filterType ) {
+            return AsyncHelpers.RunSync<bool>(() => UpdateWithWhereAsync(values, where, filterType));
+            
+          //  if (values == null) {
+          //      throw new ArgumentNullException("values cannot be null");
+          //  }
+          //  var cmd = factory.CreateCommand();
+          //  //lock (connection)
+          //  //{
+          //      cmd.Connection = connection;
+          //      bool keyFound = false;
+          //      var uq = GetUpdateString(values, cmd, ref keyFound);
+          //      //create the where
+          //      var wb = WhereBuilder(where, cmd, filterType.ToString());
+          //      //add it to the rest of the query
+          //      uq.AppendFormat(" {0} {1} ", string.IsNullOrWhiteSpace(wb.ToString()) ? "" : "WHERE", wb);
 
+          //      //execute it
+          //      cmd.CommandText = uq.ToString();
+          //      if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+          //      if (connection.State != ConnectionState.Closed) connection.Close();
+          //      connection.Open();
+          //      cmd.Prepare();
+          //      var result = (int)cmd.ExecuteNonQuery();
+          //      connection.Close();
+          //      return result > 0;
+          ////  }
+        }
+
+        public async Task<bool> DeleteEntityAsync(E item)
+        {
+            return await DeleteAsync(item, FilterType.AND);
+        }
         public bool DeleteEntity(E item)
         {
             return Delete(item, FilterType.AND);
+        }
+
+        public async Task<bool> DeleteAsync(object where)
+        {
+            return await DeleteAsync(where, FilterType.AND);  
         }
 
         public bool Delete(object where)
@@ -352,93 +506,190 @@ namespace Needletail.DataAccess {
             return Delete(where, FilterType.AND);
         }
 
-        public bool Delete(object where, FilterType filterType) {
-
+        public async Task<bool> DeleteAsync(object where, FilterType filterType)
+        {
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                string dq = string.Format("DELETE FROM [{0}] ", this.TableName);
+            cmd.Connection = connection;
+            string dq = string.Format("DELETE FROM [{0}] ", this.TableName);
 
-                var wq = WhereBuilder(where, cmd, filterType.ToString());
-                if (string.IsNullOrWhiteSpace(wq.ToString()))
-                    wq.Insert(0, dq);
-                else
-                    wq.Insert(0, string.Format("{0} WHERE ", dq));
+            var wq = WhereBuilder(where, cmd, filterType.ToString());
+            if (string.IsNullOrWhiteSpace(wq.ToString()))
+                wq.Insert(0, dq);
+            else
+                wq.Insert(0, string.Format("{0} WHERE ", dq));
 
-                //execute it
-                cmd.CommandText = wq.ToString();
-                if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-                if (connection.State != ConnectionState.Closed) connection.Close();
-                connection.Open();
-                cmd.Prepare();
+            //execute it
+            cmd.CommandText = wq.ToString();
+            if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            connection.Open();
+            cmd.Prepare();
 
-                var result = (int)cmd.ExecuteNonQuery();
-                connection.Close();
-                return result > 0;
-            }
+            var result = (int) await cmd.ExecuteNonQueryAsync();
+            connection.Close();
+            return result > 0;
+        }
+        
+        public bool Delete(object where, FilterType filterType) {
+            return AsyncHelpers.RunSync<bool>(() => DeleteAsync(where, filterType));
+            
+         //   var cmd = factory.CreateCommand();
+         //   //lock (connection)
+         //   //{
+         //       cmd.Connection = connection;
+         //       string dq = string.Format("DELETE FROM [{0}] ", this.TableName);
+
+         //       var wq = WhereBuilder(where, cmd, filterType.ToString());
+         //       if (string.IsNullOrWhiteSpace(wq.ToString()))
+         //           wq.Insert(0, dq);
+         //       else
+         //           wq.Insert(0, string.Format("{0} WHERE ", dq));
+
+         //       //execute it
+         //       cmd.CommandText = wq.ToString();
+         //       if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+         //       if (connection.State != ConnectionState.Closed) connection.Close();
+         //       connection.Open();
+         //       cmd.Prepare();
+
+         //       var result = (int)cmd.ExecuteNonQuery();
+         //       connection.Close();
+         //       return result > 0;
+         ////   }
         }
 
-        public IEnumerable<E> GetMany(string select, string where, string orderBy)
+        public async Task<IEnumerable<E>> GetManyAsync(string select, string where, string orderBy)
         {
             if (string.IsNullOrWhiteSpace(select))
                 throw new ArgumentNullException("Select");
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                //Set the command
-                cmd.CommandText = string.Format("{0} FROM [{1}] {2} {3}", select, this.TableName, string.IsNullOrWhiteSpace(where) ? "" : string.Format(" WHERE {0} ", where), string.IsNullOrWhiteSpace(orderBy) ? "" : string.Format(" Order By {0} ", orderBy));
+            cmd.Connection = connection;
+            //Set the command
+            cmd.CommandText = string.Format("{0} FROM [{1}] {2} {3}", select, this.TableName, string.IsNullOrWhiteSpace(where) ? "" : string.Format(" WHERE {0} ", where), string.IsNullOrWhiteSpace(orderBy) ? "" : string.Format(" Order By {0} ", orderBy));
 
-                return CreateListFromCommand(cmd);
-            }
+            return await CreateListFromCommandAsync(cmd);
         }
 
-        
+        public IEnumerable<E> GetMany(string select, string where, string orderBy)
+        {
+            return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(select, where, orderBy));
+            
+            //if (string.IsNullOrWhiteSpace(select))
+            //    throw new ArgumentNullException("Select");
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    //Set the command
+            //    cmd.CommandText = string.Format("{0} FROM [{1}] {2} {3}", select, this.TableName, string.IsNullOrWhiteSpace(where) ? "" : string.Format(" WHERE {0} ", where), string.IsNullOrWhiteSpace(orderBy) ? "" : string.Format(" Order By {0} ", orderBy));
+
+            //    return CreateListFromCommand(cmd);
+            ////}
+        }
+
+
+        public async Task<IEnumerable<E>> GetManyAsync(string where, string orderBy, Dictionary<string, object> args, int? topN)
+        {
+            if (where == null)
+            {
+                throw new ArgumentNullException("where");
+            }
+            var cmd = factory.CreateCommand();
+            cmd.Connection = connection;
+            //Add the parameters
+            AddParameters(cmd, args);
+            //Set the command
+            cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, where, orderBy, topN);
+
+            return await CreateListFromCommandAsync(cmd);
+        }
+
         /// <summary>
         /// get a list of elements
         /// </summary>
         /// <param name="where">The where string</param>
         /// <param name="args">parameters names and values being used in the query</param>
         /// <param name="topN">if this null, it will get all the elements that match the query</param>
-        public IEnumerable<E> GetMany(string where,string orderBy, Dictionary<string,object> args,int? topN) {
-            if (where==null) {
-                throw new ArgumentNullException("where");
-            }
-            var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                //Add the parameters
-                AddParameters(cmd, args);
-                //Set the command
-                cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, where, orderBy, topN);
+        public IEnumerable<E> GetMany(string where,string orderBy, Dictionary<string,object> args,int? topN) 
+        {
+            return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(where, orderBy, args, topN));
+            
+            //if (where==null) {
+            //    throw new ArgumentNullException("where");
+            //}
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    //Add the parameters
+            //    AddParameters(cmd, args);
+            //    //Set the command
+            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, where, orderBy, topN);
 
-                return CreateListFromCommand(cmd);
-            }
+            //    return CreateListFromCommand(cmd);
+            ////}
         }
 
 
+        public virtual async Task<IEnumerable<E>> GetManyAsync(string where, string orderBy, Dictionary<string, object> args, int page, int pageSize)
+        {
+            if (string.IsNullOrWhiteSpace(where))
+            {
+                throw new ArgumentNullException("where");
+            }
+            var cmd = factory.CreateCommand();
+            //lock (connection)
+            //{
+            cmd.Connection = connection;
+            //Add the parameters
+            AddParameters(cmd, args);
+
+            //Set the command
+            cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, where, orderBy, pageSize, page, this.Key);
+
+            return await CreateListFromCommandAsync(cmd);
+            //}
+        }
 
         public virtual IEnumerable<E> GetMany(string where,string orderBy, Dictionary<string, object> args, int page, int pageSize)
         {
-            if (string.IsNullOrWhiteSpace(where)) {
-                throw new ArgumentNullException("where");
-            }
-            var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                //Add the parameters
-                AddParameters(cmd, args);
+            return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(where, orderBy, args, page, pageSize));
+            
+            //if (string.IsNullOrWhiteSpace(where)) {
+            //    throw new ArgumentNullException("where");
+            //}
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    //Add the parameters
+            //    AddParameters(cmd, args);
 
-                //Set the command
-                cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, where, orderBy, pageSize, page, this.Key);
+            //    //Set the command
+            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, where, orderBy, pageSize, page, this.Key);
 
-                return CreateListFromCommand(cmd);
-            }
+            //    return CreateListFromCommand(cmd);
+            ////}
         }
 
+
+        public async Task<IEnumerable<E>> GetManyAsync(object where, FilterType filterType, object orderBy, int? topN)
+        {
+
+            if (where == null)
+            {
+                throw new ArgumentNullException("filter");
+            }
+            IList<E> list = new List<E>();
+            var cmd = factory.CreateCommand();
+            cmd.Connection = connection;
+            StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
+            StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
+
+            cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, qb.ToString(), oq.ToString(), topN);
+
+            return await CreateListFromCommandAsync(cmd);
+        }
 
         /// <summary>
         /// Get a list of elements that match the query
@@ -446,56 +697,86 @@ namespace Needletail.DataAccess {
         /// <param name="filter">The filter to be used, use like this: new { Name = "Me", Age = 34 }</param>
         /// <param name="filterType">chain the filter with AND/OR</param>
         /// <param name="topN">if this null, it will get all the elements that match the query</param>
-        public IEnumerable<E> GetMany(object where,FilterType filterType,object orderBy,int? topN) {
+        public IEnumerable<E> GetMany(object where,FilterType filterType,object orderBy,int? topN) 
+        {
+            return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(where, filterType, orderBy, topN));
             
-            if (where==null) {
+            //if (where==null) {
+            //    throw new ArgumentNullException("filter");
+            //}
+            //IList<E> list = new List<E>();
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
+            //    StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
+
+            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, qb.ToString(), oq.ToString(), topN);
+
+            //    return CreateListFromCommand(cmd);
+            ////}
+        }
+
+        public virtual async Task<IEnumerable<E>> GetManyAsync(object where, object orderBy, FilterType filterType, int page, int pageSize)
+        {
+            if (where == null)
+            {
                 throw new ArgumentNullException("filter");
             }
             IList<E> list = new List<E>();
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
-                StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
-
-                cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, qb.ToString(), oq.ToString(), topN);
-
-                return CreateListFromCommand(cmd);
-            }
+            cmd.Connection = connection;
+            StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
+            StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
+            cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, qb.ToString(), oq.ToString(), pageSize, page, this.Key);
+            return await CreateListFromCommandAsync(cmd);
         }
-
 
         public virtual IEnumerable<E> GetMany(object where, object orderBy,FilterType filterType, int page, int pageSize)
         {
-            if (where == null) {
-                throw new ArgumentNullException("filter");
-            }
-            IList<E> list = new List<E>();
-            var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
-                StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
+            return AsyncHelpers.RunSync<IEnumerable<E>>(()=>GetManyAsync(where, orderBy, filterType, page, pageSize));
+            
+            //if (where == null) {
+            //    throw new ArgumentNullException("filter");
+            //}
+            //IList<E> list = new List<E>();
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
+            //    StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
 
 
-                cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, qb.ToString(), oq.ToString(), pageSize, page, this.Key);
+            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, qb.ToString(), oq.ToString(), pageSize, page, this.Key);
 
-                return CreateListFromCommand(cmd);
-            }
+            //    return CreateListFromCommand(cmd);
+            ////}
         }
 
+        public async Task<IEnumerable<E>> GetManyAsync(object where)
+        {
+            return await GetManyAsync(where, FilterType.AND, null, null);
+        }
 
         public IEnumerable<E> GetMany(object where) 
         {
             return GetMany(where, FilterType.AND, null, null);
         }
 
-
+        public async Task<IEnumerable<E>> GetManyAsync(object where, object orderBy)
+        {
+            return await GetManyAsync(where, FilterType.AND, orderBy, null);
+        }
         public IEnumerable<E> GetMany(object where,object orderBy)
         {
             return GetMany(where, FilterType.AND, orderBy, null);
+        }
+
+        public async Task<E> GetSingleAsync(object where)
+        {
+            return await GetSingleAsync(where: where, filterType: FilterType.AND);
         }
 
         public E GetSingle(object where)
@@ -503,8 +784,20 @@ namespace Needletail.DataAccess {
             return GetSingle(where: where, filterType: FilterType.AND);
         }
 
+        public async Task<E> GetSingleAsync(string where, Dictionary<string, object> args)
+        {
+            var singleE = await GetManyAsync(where, string.Empty, args, 1);
+            return singleE.FirstOrDefault();
+        }
+
         public E GetSingle(string where, Dictionary<string,object> args) {
             var singleE = GetMany(where,string.Empty,args,1);
+            return singleE.FirstOrDefault();
+        }
+
+        public async Task<E> GetSingleAsync(object where, FilterType filterType)
+        {
+            var singleE = await GetManyAsync(where, filterType, null, 1);
             return singleE.FirstOrDefault();
         }
 
@@ -514,9 +807,8 @@ namespace Needletail.DataAccess {
         }
 
 
-        public IEnumerable<T> JoinGetTyped<T>(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
+        public async Task<IEnumerable<T>> JoinGetTypedAsync<T>(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
         {
-            
             if (string.IsNullOrWhiteSpace(selectColumns))
             {
                 throw new ArgumentNullException("selectQuery");
@@ -528,42 +820,90 @@ namespace Needletail.DataAccess {
 
             //create the query
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
-                //add the parameters
-                AddParameters(cmd, args);
+            cmd.Connection = connection;
+            cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
+            //add the parameters
+            AddParameters(cmd, args);
 
-                //return the data
-                return CreateUnknownItemListFromCommandTyped<T>(cmd);
-            }
+            //return the data
+            return await CreateUnknownItemListFromCommandTypedAsync<T>(cmd);
+        }
+
+        public IEnumerable<T> JoinGetTyped<T>(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
+        {
+            return AsyncHelpers.RunSync<IEnumerable<T>>(() => JoinGetTypedAsync<T>(selectColumns, joinQuery, whereQuery, orderBy, args));
+            
+            //if (string.IsNullOrWhiteSpace(selectColumns))
+            //{
+            //    throw new ArgumentNullException("selectQuery");
+            //}
+            //if (string.IsNullOrWhiteSpace(joinQuery))
+            //{
+            //    throw new ArgumentNullException("joinQuery");
+            //}
+
+            ////create the query
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
+            //    //add the parameters
+            //    AddParameters(cmd, args);
+
+            //    //return the data
+            //    return CreateUnknownItemListFromCommandTyped<T>(cmd);
+            ////}
             
         }
 
-
-        public IEnumerable<DynamicEntity> Join(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
+        public async Task<IEnumerable<DynamicEntity>> JoinAsync(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
         {
-            if (string.IsNullOrWhiteSpace(selectColumns)) { 
+            if (string.IsNullOrWhiteSpace(selectColumns))
+            {
                 throw new ArgumentNullException("selectQuery");
             }
-            if (string.IsNullOrWhiteSpace(joinQuery)) {
+            if (string.IsNullOrWhiteSpace(joinQuery))
+            {
                 throw new ArgumentNullException("joinQuery");
             }
-            
+
 
             //create the query
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ",whereQuery), orderBy);
-                //add the parameters
-                AddParameters(cmd, args);
+            cmd.Connection = connection;
+            cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
+            //add the parameters
+            AddParameters(cmd, args);
 
-                //return the data
-                return CreateUnknownItemListFromCommand(cmd);
-            }
+            //return the data
+            return await CreateUnknownItemListFromCommandAsync(cmd);
+        }
+
+        public IEnumerable<DynamicEntity> Join(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
+        {
+            return AsyncHelpers.RunSync<IEnumerable<DynamicEntity>>(() => JoinAsync(selectColumns, joinQuery, whereQuery, orderBy, args));
+            
+            //if (string.IsNullOrWhiteSpace(selectColumns)) { 
+            //    throw new ArgumentNullException("selectQuery");
+            //}
+            //if (string.IsNullOrWhiteSpace(joinQuery)) {
+            //    throw new ArgumentNullException("joinQuery");
+            //}
+            
+
+            ////create the query
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //    cmd.Connection = connection;
+            //    cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ",whereQuery), orderBy);
+            //    //add the parameters
+            //    AddParameters(cmd, args);
+
+            //    //return the data
+            //    return CreateUnknownItemListFromCommand(cmd);
+            ////}
         }
 
 
@@ -662,7 +1002,7 @@ namespace Needletail.DataAccess {
             for (int x = 0; x < props.Length; x++)
             {
                 var p = props[x];
-                var direction = p.GetValue(orderBy, null).ToString().ToUpper();
+                var direction = p.GetValue(orderBy).ToString().ToUpper();
                 if (direction == "ASC" || direction == "DESC")
                 {
                     w.AppendFormat(" {0} {1} ", p.Name, direction);
@@ -676,14 +1016,14 @@ namespace Needletail.DataAccess {
         }
 
 
-        private IEnumerable<E> CreateListFromCommand(DbCommand cmd) {
+        private async Task<IEnumerable<E>> CreateListFromCommandAsync(DbCommand cmd) {
             IList<E> list = new List<E>();
             if (connection.State != ConnectionState.Closed) connection.Close();
             connection.Open();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
                cmd.Prepare();
             //fill the collection
-            using (var reader = cmd.ExecuteReader()) {
+            using (var reader = await cmd.ExecuteReaderAsync()) {
                 var cols = new List<string>();
                 if(reader.Read()){
                     for(int x=0; x<reader.FieldCount; x++){
@@ -713,7 +1053,7 @@ namespace Needletail.DataAccess {
             return list;
         }
 
-        private IEnumerable<DynamicEntity> CreateUnknownItemListFromCommand(DbCommand cmd)
+        private async Task<IEnumerable<DynamicEntity>> CreateUnknownItemListFromCommandAsync(DbCommand cmd)
         {
             List<DynamicEntity> list = new List<DynamicEntity>();
             if (connection.State != ConnectionState.Closed) connection.Close();
@@ -722,7 +1062,7 @@ namespace Needletail.DataAccess {
             cmd.Prepare();
             
             //fill the collection
-            using (var reader = cmd.ExecuteReader()) {
+            using (var reader = await cmd.ExecuteReaderAsync()) {
                 var cols = new List<string>();
                 for (int x = 0; x < reader.FieldCount; x++) {
                     cols.Add(reader.GetName(x));
@@ -741,7 +1081,7 @@ namespace Needletail.DataAccess {
         }
 
 
-        private IEnumerable<T> CreateUnknownItemListFromCommandTyped<T>(DbCommand cmd)
+        private async Task<IEnumerable<T>> CreateUnknownItemListFromCommandTypedAsync<T>(DbCommand cmd)
         {
             List<T> list = new List<T>();
             if (connection.State != ConnectionState.Closed) connection.Close();
@@ -750,7 +1090,7 @@ namespace Needletail.DataAccess {
             cmd.Prepare();
             
             //fill the collection
-            using (var reader = cmd.ExecuteReader())
+            using (var reader = await cmd.ExecuteReaderAsync())
             {
                 var cols = new List<string>();
 
@@ -841,11 +1181,9 @@ namespace Needletail.DataAccess {
         #endregion
 
 
-        public void ExecuteNonQuery(string query, Dictionary<string, object> args)
+        public async Task ExecuteNonQueryAsync(string query, Dictionary<string, object> args)
         {
             var cmd = factory.CreateCommand();
-            lock (connection)
-            {
                 cmd.Connection = connection;
                 cmd.CommandText = query;
                 //add the parameters
@@ -855,34 +1193,74 @@ namespace Needletail.DataAccess {
                 connection.Open();
                 if (BeforeRunCommand != null) BeforeRunCommand(cmd);
                 cmd.Prepare();                
-                cmd.ExecuteNonQuery();
+                await cmd.ExecuteNonQueryAsync();
                 connection.Close();
-                
-            }
         }
 
+        public void ExecuteNonQuery(string query, Dictionary<string, object> args)
+        {
+            AsyncHelpers.RunSync(() => ExecuteNonQueryAsync(query, args));
+
+            //var cmd = factory.CreateCommand();
+            ////lock (connection)
+            ////{
+            //cmd.Connection = connection;
+            //cmd.CommandText = query;
+            ////add the parameters
+            //AddParameters(cmd, args);
+            //if (connection.State != ConnectionState.Closed) connection.Close();
+            ////execute the query
+            //connection.Open();
+            //if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            //cmd.Prepare();
+            //cmd.ExecuteNonQuery();
+            //connection.Close();
+            //// }
+        }
+
+        public async Task<T> ExecuteScalarAsync<T>(string query, Dictionary<string, object> args)
+        {
+            var cmd = factory.CreateCommand();
+            cmd.Connection = connection;
+            cmd.CommandText = query;
+            //add the parameters
+            AddParameters(cmd, args);
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            connection.Open();
+            if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            //execute the query
+            cmd.Prepare();
+
+            var t = await cmd.ExecuteScalarAsync();
+            connection.Close();
+            if (t == DBNull.Value || t == null)
+                return default(T);
+            return (T)t;
+        }
 
         public T ExecuteScalar<T>(string query, Dictionary<string, object> args)
         {
-            var cmd = factory.CreateCommand();
-            lock (connection)
-            {
-                cmd.Connection = connection;
-                cmd.CommandText = query;
-                //add the parameters
-                AddParameters(cmd, args);
-                if (connection.State != ConnectionState.Closed) connection.Close();
-                connection.Open();
-                if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-                //execute the query
-                cmd.Prepare();
+            return AsyncHelpers.RunSync<T>(() => ExecuteScalarAsync<T>(query, args));
+            
+           // var cmd = factory.CreateCommand();
+           // //lock (connection)
+           // //{
+           //     cmd.Connection = connection;
+           //     cmd.CommandText = query;
+           //     //add the parameters
+           //     AddParameters(cmd, args);
+           //     if (connection.State != ConnectionState.Closed) connection.Close();
+           //     connection.Open();
+           //     if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+           //     //execute the query
+           //     cmd.Prepare();
                 
-                var t = cmd.ExecuteScalar();
-                connection.Close();
-                if (t == DBNull.Value || t == null)
-                    return default(T);
-                return (T)t;
-            }
+           //     var t = cmd.ExecuteScalar();
+           //     connection.Close();
+           //     if (t == DBNull.Value || t == null)
+           //         return default(T);
+           //     return (T)t;
+           //// }
         }
 
 

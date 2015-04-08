@@ -8,6 +8,9 @@ using System.Reflection;
 using System.Xml;
 using DataAccess.Scaffold.Attributes;
 using Needletail.DataAccess.Attributes;
+using System.Data.SqlClient;
+using System.Configuration;
+using Generator.Models;
 namespace Generator
 {
     class Program
@@ -18,7 +21,8 @@ namespace Generator
         static string projectPath;
         static Type entityType;
         static Dictionary<string, List<object>> vmAttributes = new Dictionary<string, List<object>>();
-
+        static DirectoryInfo di;
+        static List<string> tableNames = new List<string>();
         /// <summary>
         /// This must run from the root folder of the project
         /// </summary>
@@ -29,7 +33,7 @@ namespace Generator
             if (args.Length < 3)
             {
 
-                Console.Write("Please enter the action(Controller/Repository/Views): ");
+                Console.Write("Please enter the action(Controller/Repository/Views/Model): ");
                 action = Console.ReadLine();
 
                 Console.Write("Please enter the name of the entity: ");
@@ -45,47 +49,6 @@ namespace Generator
                 projectPath = args[2];
             }
 
-            //Load all assemblies that do not start with System
-            DirectoryInfo di = new DirectoryInfo(projectPath + @"\bin");
-            var dlls = di.GetFiles("*.dll");
-            entityType = null;
-            foreach (var file in dlls)
-            {
-                //load the assembly and check for the entity
-                var library = Assembly.LoadFile(file.FullName);
-                
-                Type[] types = null;
-                try
-                {
-                    types = library.GetTypes();
-                }
-                catch (Exception ex)
-                {
-                    if (ex is System.Reflection.ReflectionTypeLoadException)
-                    {
-                        var typeLoadException = ex as ReflectionTypeLoadException;
-                        var loaderExceptions = typeLoadException.LoaderExceptions;
-                    }
-                }
-                if (types == null)
-                    continue;
-                foreach (var tp in types)
-                {
-                    if (tp.Name.ToLower() == entityName.ToLower())
-                    {
-                        entityType = tp;
-                        break;
-                    }
-                }
-                if (entityType != null)
-                    break;
-            }
-
-            if (entityType == null)
-            {
-                Console.WriteLine("Entity not found");
-                return;
-            }
 
             try
             {
@@ -93,29 +56,232 @@ namespace Generator
                 switch (action)
                 {
                     case "Views":
+                        //Load all assemblies that do not start with System
+                        AppDomain currentDomain = AppDomain.CurrentDomain;
+                        currentDomain.AssemblyResolve += currentDomain_AssemblyResolve;
+                        di = new DirectoryInfo(projectPath + @"\bin");
+                        var dlls = di.GetFiles("*.dll");
+                        entityType = null;
+                        foreach (var file in dlls)
+                        {
+                            if (file.Name.StartsWith("System") || file.Name.StartsWith("Microsoft") || file.Name.StartsWith("Entity"))
+                                continue;
+                            //load the assembly and check for the entity
+                            var library = Assembly.LoadFile(file.FullName);
+
+                            Type[] types = null;
+                            try
+                            {
+                                types = library.GetTypes();
+                            }
+                            catch (Exception ex)
+                            {
+                                if (ex is System.Reflection.ReflectionTypeLoadException)
+                                {
+                                    var typeLoadException = ex as ReflectionTypeLoadException;
+                                    var loaderExceptions = typeLoadException.LoaderExceptions;
+                                }
+                            }
+                            if (types == null)
+                                continue;
+                            foreach (var tp in types)
+                            {
+                                if (tp.Name.ToLower() == entityName.ToLower())
+                                {
+                                    entityType = tp;
+                                    break;
+                                }
+                            }
+                            if (entityType != null)
+                                break;
+                        }
+
+                        if (entityType == null)
+                        {
+                            Console.WriteLine("Entity not found");
+                            return;
+                        }
                         GenerateView();
                         break;
                     case "Repository":
                         break;
                     case "Controller":
                         break;
+                    case "Model":
+                        GenerateModel();
+                        break;
                 }
 
 
-
-                Console.WriteLine("Finished!");
-
-
-
+                
 
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
             }
+
+            
+
+            
 #if DEBUG
-            Console.ReadKey();
+            //Console.WriteLine("Finished!");
+            //Console.ReadKey();
 #endif
+        }
+
+        static Assembly currentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            //load the missing assembly from the bin path
+            var dll = args.Name.Split(new char[] { ','});
+            return Assembly.LoadFile(di.FullName + @"\" + dll[0] + ".dll");
+        }
+
+        static void GenerateModel()
+        {
+            SqlConnection cn = null;
+
+            //check first if we are going to generate models for the whole DB
+            if (entityName.ToLower() == "fulldb")
+            {
+                //get all the table names first
+                try
+                {
+                    using (cn = new SqlConnection(ConfigurationManager.ConnectionStrings["Default"].ConnectionString))
+                    {
+                        cn.Open();
+                        SqlCommand cmd = new SqlCommand(
+                            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+                            , cn);
+                        var reader = cmd.ExecuteReader();
+                        while (reader.Read())
+                            tableNames.Add(reader.GetString(0));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+            else
+                tableNames.Add(entityName);
+
+            foreach (var en in tableNames)
+            {
+                entityName = en;
+                List<Schema> fields = new List<Schema>();
+                try
+                {
+                    using (cn = new SqlConnection(ConfigurationManager.ConnectionStrings["Default"].ConnectionString))
+                    {
+                        cn.Open();
+                        SqlCommand cmd = new SqlCommand(
+                            string.Format("Select INFORMATION_SCHEMA.COLUMNS.column_name, Data_type, ordinal_position,IS_NULLABLE,CHARACTER_MAXIMUM_LENGTH, INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE.CONSTRAINT_NAME " +
+                                    "FROM INFORMATION_SCHEMA.COLUMNS " +
+                                    "left join INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE " +
+                                    "on INFORMATION_SCHEMA.COLUMNS.Column_name = INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE.Column_name " +
+                                    "and INFORMATION_SCHEMA.COLUMNS.table_name = '{0}' and INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE.TABLE_NAME='{0}' " +
+                                    "where INFORMATION_SCHEMA.COLUMNS.table_name = '{0}' ORDER BY ordinal_position", entityName)
+                            , cn);
+                        var reader = cmd.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            var field = new Schema { };
+                            fields.Add(field);
+                            field.column_name = reader.GetString(0);
+                            field.Data_type = reader.GetString(1);
+                            field.ordinal_position = reader.GetInt32(2);
+                            field.IS_NULLABLE = reader.GetString(3);
+                            if (!reader.IsDBNull(4))
+                                field.CHARACTER_MAXIMUM_LENGTH = reader.GetInt32(4);
+                            field.CONSTRAINT_NAME = reader.IsDBNull(5) ? string.Empty : reader.GetString(5);
+                        }
+                    }
+
+                    using (XmlWriter writer = XmlWriter.Create(entityName + ".xml"))
+                    {
+                        writer.WriteStartDocument();
+                        writer.WriteStartElement("model");
+                        writer.WriteStartElement("entity");
+                        writer.WriteAttributeString("name", entityName);
+                        var pk = fields.FirstOrDefault(f => f.CONSTRAINT_NAME.StartsWith("PK_"));
+                        if (pk != null)
+                        {
+                            switch (pk.Data_type)
+                            {
+                                case "uniqueidentifier":
+                                    writer.WriteAttributeString("primaryKeyType", "Guid");
+                                    break;
+                                case "int":
+                                    writer.WriteAttributeString("primaryKeyType", "int");
+                                    break;
+                                default:
+                                    writer.WriteAttributeString("primaryKeyType", pk.Data_type);
+                                    break;
+                            }
+                        }
+                        writer.WriteStartElement("fields");
+                        foreach (var f in fields)
+                        {
+                            //Create the field
+                            writer.WriteStartElement(f.column_name);
+                            writer.WriteAttributeString("dataType", f.Data_type);
+                            var atts = new StringBuilder();
+
+                            //write validators and datatypes
+                            if (f.IS_NULLABLE == "NO")
+                                atts.Append(" notEmpty");
+                            if (f.CHARACTER_MAXIMUM_LENGTH.HasValue)
+                                atts.Append(" max");
+                            {
+                            if (f.Data_type == "date")
+                                atts.Append(" date");
+                            if ("int,money,real,float,numeric,bigint,smallint,smallmoney,tinyint".Contains(f.Data_type))
+                                atts.Append(" numeric");
+                            if (f.column_name.ToLower().Contains("email"))
+                                atts.Append(" emailAddress");
+                            if (f.column_name.ToLower().Contains("zipcode"))
+                                atts.Append(" zipCode");
+                            if (f.column_name.ToLower().Contains("phone"))
+                                atts.Append(" phone");
+                            string attributes = atts.ToString().TrimStart();
+
+                            if (attributes.Length > 0)
+                                writer.WriteAttributeString("validator", attributes);
+                                if (attributes.Contains("max"))
+                                {
+                                    writer.WriteStartElement("Validator");
+                                    writer.WriteAttributeString("Max", f.CHARACTER_MAXIMUM_LENGTH.Value.ToString());
+                                    writer.WriteEndElement();
+                                }
+                            }
+                            
+                            writer.WriteEndElement();
+                        }
+                        writer.WriteEndElement();
+                        writer.WriteEndElement();
+                        writer.WriteEndDocument();
+                        writer.Flush();
+                    }
+
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+
+                }
+                finally
+                {
+                    cn.Close();
+                }
+            
+
+            }
+
+            
+            
+
         }
 
         static void GenerateView()
@@ -127,7 +293,7 @@ namespace Generator
                 using (XmlWriter writer = XmlWriter.Create(entityName + ".xml"))
                 {
                     writer.WriteStartDocument();
-                    writer.WriteStartElement("model");
+                    writer.WriteStartElement("model");                    
                     WriteEntity(entityType, writer);
                     writer.WriteEndElement();
                     writer.WriteEndDocument();
@@ -154,7 +320,7 @@ namespace Generator
                 {
                     writer.WriteStartDocument();
                     writer.WriteStartElement("model");
-
+                    writer.WriteAttributeString("namespace", entityType.Namespace);
                     //First process all objects that are independent from others
                     var ind = props.Where(p => vmAttributes.ContainsKey(p.Name));
                     foreach (var i in ind)
@@ -245,8 +411,15 @@ namespace Generator
             {
                 writer.WriteStartElement("entity");
                 writer.WriteAttributeString("name", name);
+                if(!entityType.Namespace.StartsWith("System."))
+                    writer.WriteAttributeString("namespace", entityType.Namespace);
+                else
+                    writer.WriteAttributeString("namespace", entityType.GenericTypeArguments[0].Namespace);                    
+                    //writer.WriteAttributeString("namespace", entityType.GetProperties().First().PropertyType.Namespace);
                 //determine the type of the primary key
                 var key = entityType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes(typeof(TableKeyAttribute), false) != null);
+                if(key == null)
+                    key = entityType.GenericTypeArguments[0].GetProperties().FirstOrDefault(p => p.GetCustomAttributes(typeof(TableKeyAttribute), false) != null);
                 if(key.PropertyType.Namespace != "System" && key.PropertyType.IsClass)
                     key = key.PropertyType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes(typeof(TableKeyAttribute), false) != null);
 
@@ -286,6 +459,10 @@ namespace Generator
                         case "Decimal":
                             attsVal = "numeric";
                             break;
+                        case "bool":
+                        case "Boolean":
+                            attsVal = "bool";
+                            break;
 
                     }
                     if (validators != null && validators.Count > 0)
@@ -317,6 +494,17 @@ namespace Generator
                                     writer.WriteStartElement("SelectFrom");
                                     writer.WriteAttributeString("DisplayField", sf.DisplayField);
                                     writer.WriteAttributeString("ReferencedField", sf.ReferencedField);
+                                    writer.WriteEndElement();
+                                    break;
+                                case "Autocomplete":
+                                    var au = (attr as Autocomplete);
+                                    writer.WriteAttributeString("Autocomplete", true.ToString());
+                                    writer.WriteStartElement("Autocomplete");
+                                    writer.WriteAttributeString("SearchField", au.SearchField);
+                                    writer.WriteAttributeString("ReferencedTable", au.ReferencedTable);
+                                    writer.WriteAttributeString("ReferencedField", au.ReferencedField);
+                                    writer.WriteAttributeString("DisplayField", au.DisplayField);
+                                    writer.WriteAttributeString("OrderByField", au.OrderByField);
                                     writer.WriteEndElement();
                                     break;
                                 case "HasOne":

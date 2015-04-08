@@ -11,6 +11,7 @@
     <AssemblyName>DataAccess.Scaffold</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -43,7 +46,10 @@
     <Compile Include="Attributes\Base\NeedletailRelationAttribute.cs" />
     <Compile Include="Attributes\Base\NeedletailUIAttribute.cs" />
     <Compile Include="Attributes\DataAccess\NeedletailViewModel.cs" />
+    <Compile Include="Attributes\Relationships\Catalog.cs" />
     <Compile Include="Attributes\Relationships\HasManyNtoN.cs" />
+    <Compile Include="Attributes\UI\Hidden.cs" />
+    <Compile Include="Attributes\UI\Autocomplete.cs" />
     <Compile Include="Attributes\Validation\Between.cs" />
     <Compile Include="Attributes\Validation\Email.cs" />
     <Compile Include="Attributes\Validation\GreaterThan.cs" />

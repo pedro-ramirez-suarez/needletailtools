@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<model>
+  <entity name="User" primaryKeyType="Guid">
+    <fields>
+      <Id />
+      <Name validator="notEmpty">
+        <Validator />
+      </Name>
+      <Email validator="emailAddress">
+        <Validator />
+      </Email>
+      <Age validator="numeric" />
+      <SubscriptionDate validator="date" />
+      <Password validator="regexp">
+        <Validator RegExp="^[a-zA-Z]\w{3,14}$" />
+      </Password>
+      <DepartmentId />
+      <AddressId />
+    </fields>
+  </entity>
+</model>

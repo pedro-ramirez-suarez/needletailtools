@@ -30,10 +30,25 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DataAccess.Scaffold, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Scaffolding\MVC5\packages\Needletail.DataAccess.1.1\lib\net451\DataAccess.Scaffold.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.Types, Version=10.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\Scaffolding\MVC5\packages\Needletail.DataAccess.1.1\lib\net451\Microsoft.SqlServer.Types.dll</HintPath>
+    </Reference>
+    <Reference Include="Needletail.DataAccess, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Scaffolding\MVC5\packages\Needletail.DataAccess.1.1\lib\net451\Needletail.DataAccess.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions">
+      <Private>True</Private>
+      <HintPath>..\Scaffolding\MVC5\packages\Needletail.DataAccess.1.1\lib\net451\System.Data.DataSetExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -49,21 +64,10 @@
     <Compile Include="Model\Entity\User.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Xml\Model.xml">
+    <None Include="packages.config">
       <SubType>Designer</SubType>
-    </Content>
+    </None>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DataAccess.Scaffold\DataAccess.Scaffold.csproj">
-      <Project>{41aadbb3-c31b-4761-aa9b-317dfd4af17d}</Project>
-      <Name>DataAccess.Scaffold</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DataAccess\DataAccess.csproj">
-      <Project>{67f95add-615e-48a5-a833-4ddba4c364ea}</Project>
-      <Name>DataAccess</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

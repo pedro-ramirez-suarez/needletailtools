@@ -42,23 +42,43 @@ namespace DataAccess.Scaffold.ViewModels
                 me = this;
             var props = me.GetType().GetProperties();
             Dictionary<string, List<object>> vmAttributes = new Dictionary<string, List<object>>();
+            Dictionary<string, List<object>> catalogs = new Dictionary<string, List<object>>();
 
             //It's a view model, get all  the Relation and UI attributes first for all the properties
             foreach (var p in props)
             {
                 var relAtts = p.GetCustomAttributes(typeof(NeedletailRelationAttribute), true);
                 var uiAtts = p.GetCustomAttributes(typeof(NeedletailUIAttribute), true);
+                var cat = p.GetCustomAttributes(typeof(Catalog), true);
                 if (relAtts.Length > 0 || uiAtts.Length > 0)
                 {
                     vmAttributes.Add(p.Name, new List<object>());
                     vmAttributes[p.Name].AddRange(relAtts);
                     vmAttributes[p.Name].AddRange(uiAtts);
                 }
+                if (cat.Length > 0)
+                    catalogs.Add(p.Name, cat.ToList());
             }
+            PropertyInfo key;
+            //process catalogs first
+            if (catalogs.Count > 0)
+                foreach (var c in catalogs)
+                {
+                    //get the property
+                    var cl = props.FirstOrDefault(p => p.Name == c.Key);
+                    var prop = props.FirstOrDefault(p => p.Name == c.Key);
+                    //get the whole list
+                    var item = cl.PropertyType.GetProperties()[0];
+                    dynamic context = CreateDataContextFor(item.PropertyType, out key);
+                    dynamic list = context.GetAll();
+                    prop.SetValue(me, list);
+                    context.Dispose();
+                }
+
             //First process all objects that are independent from others
             var ind = props.Where(p => vmAttributes.ContainsKey(p.Name));
             //In theory just one property should be here
-            PropertyInfo key;
+            
             dynamic record = null;
             foreach (var i in ind)
             {
@@ -167,7 +187,7 @@ namespace DataAccess.Scaffold.ViewModels
             }
         }
 
-        private dynamic CreateDataContextFor(Type itemType, out PropertyInfo key) 
+        protected dynamic CreateDataContextFor(Type itemType, out PropertyInfo key) 
         {
             //get the type of the property marked as the ID
             key = itemType.GetProperties().FirstOrDefault(p => p.GetCustomAttributes(typeof(TableKeyAttribute), false) != null);

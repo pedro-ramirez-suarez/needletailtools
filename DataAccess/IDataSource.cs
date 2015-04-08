@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using Needletail.DataAccess.Engines;
 using Needletail.DataAccess.Entities;
+using System.Threading.Tasks;
 namespace Needletail.DataAccess {
     public interface IDataSource<E, K>
-     where E : class {
+     where E : class
+    {
+        
         bool Delete(object where, FilterType filterType);
         bool Delete(object where);
         bool DeleteEntity(E item);
 
         System.Collections.Generic.IEnumerable<E> GetAll();
         System.Collections.Generic.IEnumerable<E> GetAll(object orderBy);
-        //System.Collections.Generic.IEnumerable<E> GetAll(string orderBy, System.Data.Common.DbCommand cmd = null);
         System.Collections.Generic.IEnumerable<E> GetMany(string select, string where,string orderBy);
         System.Collections.Generic.IEnumerable<E> GetMany(object where);
         System.Collections.Generic.IEnumerable<E> GetMany(object where,object orderBy);
@@ -30,6 +32,9 @@ namespace Needletail.DataAccess {
         bool UpdateWithWhere(object values, object where);        
         void ExecuteNonQuery(string query, Dictionary<string, object> args);
         T ExecuteScalar<T>(string query, Dictionary<string, object> args);
+        
+
+        
 
     }
 }

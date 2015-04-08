@@ -1,4 +1,5 @@
-﻿using DataAccess.Scaffold.Attributes;
+﻿
+using DataAccess.Scaffold.Attributes;
 using Needletail.DataAccess.Attributes;
 using System;
 using System.Collections.Generic;

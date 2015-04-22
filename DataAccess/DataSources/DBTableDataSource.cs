@@ -252,65 +252,6 @@ namespace Needletail.DataAccess {
        
         public K Insert(E newItem) {
             return AsyncHelpers.RunSync<K>(() => InsertAsync(newItem)); ;
-            
-            //var cmd = factory.CreateCommand();
-            //cmd.Connection = connection;
-            //bool insertKey = false;
-            //object keyValue=null;
-            ////Build the query
-            //StringBuilder mainQuery = new StringBuilder();
-            //StringBuilder valsQuery = new StringBuilder();
-            //mainQuery.AppendFormat("INSERT INTO [{0}] (", TableName);
-            //valsQuery.Append("VALUES (");
-            //for (int x = 0; x < this.EProperties.Length; x++) {
-            //    var p = this.EProperties[x];                
-            //    //do not include the ID
-            //    if (p.Name != this.Key || InsertKey) {                    
-            //        //set both
-            //        mainQuery.Append(p.Name);
-            //        valsQuery.AppendFormat("@{0}", p.Name);
-            //        //add the parameter
-            //        AddParameter(p.Name, p.GetValue(newItem, null), cmd);
-
-            //        if (x <= this.EProperties.Length - 2) {
-            //            mainQuery.Append(",");
-            //            valsQuery.Append(",");
-            //        }
-
-            //        if (p.Name == this.Key)
-            //            keyValue = p.GetValue(newItem, null);
-            //    }
-            //}
-            //mainQuery.Append(")");//Close the values
-            //valsQuery.Append(")");//Close the values
-            //mainQuery.AppendFormat(" {0}", valsQuery.ToString()); // if needed
-            
-            ////execute it
-            //cmd.CommandText = mainQuery.ToString();
-            //lock (connection)
-            //{
-            //    if (connection.State != ConnectionState.Closed) connection.Close();
-            //    connection.Open();
-            //    if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            //    cmd.Prepare();
-            //    var newId = cmd.ExecuteScalar();
-            //    if (newId == null)
-            //    {
-            //        cmd.CommandText = " SELECT @@IDENTITY From [" + TableName + "]"; //To select the indentity
-            //        if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            //        cmd.Prepare();
-            //        newId = cmd.ExecuteScalar();
-            //        if (newId.ToString() == string.Empty && InsertKey)
-            //        {
-            //            newId = keyValue;
-            //        }
-            //    }
-            //    connection.Close();
-
-            //    if (newId == DBNull.Value)
-            //        return default(K);
-            //    return (K)Convert.ChangeType(newId, typeof(K)); 
-            //}
         }
 
         public async Task<IEnumerable<E>> GetAllAsync()
@@ -394,33 +335,6 @@ namespace Needletail.DataAccess {
         /// <returns></returns>
         public bool Update(object item) {
             return AsyncHelpers.RunSync<bool>(() => UpdateAsync(item));
-
-           // if (item == null) {
-           //     throw new ArgumentNullException("item cannot be null");
-           // }
-           // var cmd = factory.CreateCommand();
-           // //lock (connection)
-           // //{
-           //     cmd.Connection = connection;
-           //     bool keyFound = false;
-           //     var uq = GetUpdateString(item, cmd, ref keyFound);
-           //     //Add the where
-           //     if (!keyFound)
-           //     {
-           //         throw new Exception("Cannot determine the value for the primary Key");
-           //     }
-
-           //     uq.AppendFormat(" WHERE [{0}] = @{0}", this.Key);
-           //     //execute it
-           //     cmd.CommandText = uq.ToString();
-           //     if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-           //     if (connection.State != ConnectionState.Closed) connection.Close();
-           //     connection.Open();
-           //     cmd.Prepare();
-           //     var result = (int)cmd.ExecuteNonQuery();
-           //     connection.Close();
-           //     return result > 0;
-           //// }
         }
 
         public async Task<bool> UpdateWithWhereAsync(object values, object where)
@@ -460,31 +374,6 @@ namespace Needletail.DataAccess {
 
         public bool UpdateWithWhere(object values, object where,FilterType filterType ) {
             return AsyncHelpers.RunSync<bool>(() => UpdateWithWhereAsync(values, where, filterType));
-            
-          //  if (values == null) {
-          //      throw new ArgumentNullException("values cannot be null");
-          //  }
-          //  var cmd = factory.CreateCommand();
-          //  //lock (connection)
-          //  //{
-          //      cmd.Connection = connection;
-          //      bool keyFound = false;
-          //      var uq = GetUpdateString(values, cmd, ref keyFound);
-          //      //create the where
-          //      var wb = WhereBuilder(where, cmd, filterType.ToString());
-          //      //add it to the rest of the query
-          //      uq.AppendFormat(" {0} {1} ", string.IsNullOrWhiteSpace(wb.ToString()) ? "" : "WHERE", wb);
-
-          //      //execute it
-          //      cmd.CommandText = uq.ToString();
-          //      if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-          //      if (connection.State != ConnectionState.Closed) connection.Close();
-          //      connection.Open();
-          //      cmd.Prepare();
-          //      var result = (int)cmd.ExecuteNonQuery();
-          //      connection.Close();
-          //      return result > 0;
-          ////  }
         }
 
         public async Task<bool> DeleteEntityAsync(E item)
@@ -532,30 +421,6 @@ namespace Needletail.DataAccess {
         
         public bool Delete(object where, FilterType filterType) {
             return AsyncHelpers.RunSync<bool>(() => DeleteAsync(where, filterType));
-            
-         //   var cmd = factory.CreateCommand();
-         //   //lock (connection)
-         //   //{
-         //       cmd.Connection = connection;
-         //       string dq = string.Format("DELETE FROM [{0}] ", this.TableName);
-
-         //       var wq = WhereBuilder(where, cmd, filterType.ToString());
-         //       if (string.IsNullOrWhiteSpace(wq.ToString()))
-         //           wq.Insert(0, dq);
-         //       else
-         //           wq.Insert(0, string.Format("{0} WHERE ", dq));
-
-         //       //execute it
-         //       cmd.CommandText = wq.ToString();
-         //       if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-         //       if (connection.State != ConnectionState.Closed) connection.Close();
-         //       connection.Open();
-         //       cmd.Prepare();
-
-         //       var result = (int)cmd.ExecuteNonQuery();
-         //       connection.Close();
-         //       return result > 0;
-         ////   }
         }
 
         public async Task<IEnumerable<E>> GetManyAsync(string select, string where, string orderBy)
@@ -573,18 +438,6 @@ namespace Needletail.DataAccess {
         public IEnumerable<E> GetMany(string select, string where, string orderBy)
         {
             return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(select, where, orderBy));
-            
-            //if (string.IsNullOrWhiteSpace(select))
-            //    throw new ArgumentNullException("Select");
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    //Set the command
-            //    cmd.CommandText = string.Format("{0} FROM [{1}] {2} {3}", select, this.TableName, string.IsNullOrWhiteSpace(where) ? "" : string.Format(" WHERE {0} ", where), string.IsNullOrWhiteSpace(orderBy) ? "" : string.Format(" Order By {0} ", orderBy));
-
-            //    return CreateListFromCommand(cmd);
-            ////}
         }
 
 
@@ -613,21 +466,6 @@ namespace Needletail.DataAccess {
         public IEnumerable<E> GetMany(string where,string orderBy, Dictionary<string,object> args,int? topN) 
         {
             return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(where, orderBy, args, topN));
-            
-            //if (where==null) {
-            //    throw new ArgumentNullException("where");
-            //}
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    //Add the parameters
-            //    AddParameters(cmd, args);
-            //    //Set the command
-            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, where, orderBy, topN);
-
-            //    return CreateListFromCommand(cmd);
-            ////}
         }
 
 
@@ -654,22 +492,6 @@ namespace Needletail.DataAccess {
         public virtual IEnumerable<E> GetMany(string where,string orderBy, Dictionary<string, object> args, int page, int pageSize)
         {
             return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(where, orderBy, args, page, pageSize));
-            
-            //if (string.IsNullOrWhiteSpace(where)) {
-            //    throw new ArgumentNullException("where");
-            //}
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    //Add the parameters
-            //    AddParameters(cmd, args);
-
-            //    //Set the command
-            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, where, orderBy, pageSize, page, this.Key);
-
-            //    return CreateListFromCommand(cmd);
-            ////}
         }
 
 
@@ -700,22 +522,6 @@ namespace Needletail.DataAccess {
         public IEnumerable<E> GetMany(object where,FilterType filterType,object orderBy,int? topN) 
         {
             return AsyncHelpers.RunSync<IEnumerable<E>>(() => GetManyAsync(where, filterType, orderBy, topN));
-            
-            //if (where==null) {
-            //    throw new ArgumentNullException("filter");
-            //}
-            //IList<E> list = new List<E>();
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
-            //    StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
-
-            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryTemplateForTop("*", TableName, qb.ToString(), oq.ToString(), topN);
-
-            //    return CreateListFromCommand(cmd);
-            ////}
         }
 
         public virtual async Task<IEnumerable<E>> GetManyAsync(object where, object orderBy, FilterType filterType, int page, int pageSize)
@@ -736,23 +542,6 @@ namespace Needletail.DataAccess {
         public virtual IEnumerable<E> GetMany(object where, object orderBy,FilterType filterType, int page, int pageSize)
         {
             return AsyncHelpers.RunSync<IEnumerable<E>>(()=>GetManyAsync(where, orderBy, filterType, page, pageSize));
-            
-            //if (where == null) {
-            //    throw new ArgumentNullException("filter");
-            //}
-            //IList<E> list = new List<E>();
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    StringBuilder qb = WhereBuilder(where, cmd, filterType.ToString(), false);
-            //    StringBuilder oq = this.OrderByBuilder(orderBy, cmd);
-
-
-            //    cmd.CommandText = this.DBMSEngineHelper.GetQueryForPagination("*", TableName, qb.ToString(), oq.ToString(), pageSize, page, this.Key);
-
-            //    return CreateListFromCommand(cmd);
-            ////}
         }
 
         public async Task<IEnumerable<E>> GetManyAsync(object where)
@@ -832,29 +621,6 @@ namespace Needletail.DataAccess {
         public IEnumerable<T> JoinGetTyped<T>(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
         {
             return AsyncHelpers.RunSync<IEnumerable<T>>(() => JoinGetTypedAsync<T>(selectColumns, joinQuery, whereQuery, orderBy, args));
-            
-            //if (string.IsNullOrWhiteSpace(selectColumns))
-            //{
-            //    throw new ArgumentNullException("selectQuery");
-            //}
-            //if (string.IsNullOrWhiteSpace(joinQuery))
-            //{
-            //    throw new ArgumentNullException("joinQuery");
-            //}
-
-            ////create the query
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ", whereQuery), orderBy);
-            //    //add the parameters
-            //    AddParameters(cmd, args);
-
-            //    //return the data
-            //    return CreateUnknownItemListFromCommandTyped<T>(cmd);
-            ////}
-            
         }
 
         public async Task<IEnumerable<DynamicEntity>> JoinAsync(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
@@ -883,27 +649,6 @@ namespace Needletail.DataAccess {
         public IEnumerable<DynamicEntity> Join(string selectColumns, string joinQuery, string whereQuery, string orderBy, Dictionary<string, object> args)
         {
             return AsyncHelpers.RunSync<IEnumerable<DynamicEntity>>(() => JoinAsync(selectColumns, joinQuery, whereQuery, orderBy, args));
-            
-            //if (string.IsNullOrWhiteSpace(selectColumns)) { 
-            //    throw new ArgumentNullException("selectQuery");
-            //}
-            //if (string.IsNullOrWhiteSpace(joinQuery)) {
-            //    throw new ArgumentNullException("joinQuery");
-            //}
-            
-
-            ////create the query
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //    cmd.Connection = connection;
-            //    cmd.CommandText = string.Format("SELECT {0} FROM [{1}] {2} {3} {4}", selectColumns, this.TableName, joinQuery, string.IsNullOrWhiteSpace(whereQuery) ? "" : string.Format(" WHERE {0} ",whereQuery), orderBy);
-            //    //add the parameters
-            //    AddParameters(cmd, args);
-
-            //    //return the data
-            //    return CreateUnknownItemListFromCommand(cmd);
-            ////}
         }
 
 
@@ -1200,22 +945,6 @@ namespace Needletail.DataAccess {
         public void ExecuteNonQuery(string query, Dictionary<string, object> args)
         {
             AsyncHelpers.RunSync(() => ExecuteNonQueryAsync(query, args));
-
-            //var cmd = factory.CreateCommand();
-            ////lock (connection)
-            ////{
-            //cmd.Connection = connection;
-            //cmd.CommandText = query;
-            ////add the parameters
-            //AddParameters(cmd, args);
-            //if (connection.State != ConnectionState.Closed) connection.Close();
-            ////execute the query
-            //connection.Open();
-            //if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            //cmd.Prepare();
-            //cmd.ExecuteNonQuery();
-            //connection.Close();
-            //// }
         }
 
         public async Task<T> ExecuteScalarAsync<T>(string query, Dictionary<string, object> args)
@@ -1241,26 +970,6 @@ namespace Needletail.DataAccess {
         public T ExecuteScalar<T>(string query, Dictionary<string, object> args)
         {
             return AsyncHelpers.RunSync<T>(() => ExecuteScalarAsync<T>(query, args));
-            
-           // var cmd = factory.CreateCommand();
-           // //lock (connection)
-           // //{
-           //     cmd.Connection = connection;
-           //     cmd.CommandText = query;
-           //     //add the parameters
-           //     AddParameters(cmd, args);
-           //     if (connection.State != ConnectionState.Closed) connection.Close();
-           //     connection.Open();
-           //     if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-           //     //execute the query
-           //     cmd.Prepare();
-                
-           //     var t = cmd.ExecuteScalar();
-           //     connection.Close();
-           //     if (t == DBNull.Value || t == null)
-           //         return default(T);
-           //     return (T)t;
-           //// }
         }
 
 

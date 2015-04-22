@@ -64,11 +64,15 @@ namespace Needletail.Mvc.Communications
                 try
                 {
                     //always send an empty package first
-                    string data = string.Concat("data:", "-1", "\n");
+                    string data = string.Concat("data:", "-1", "\n\n");
                     st.WriteLine(data);
                     st.Flush();
                     //then send the real message
-                    data= string.Concat("data:", remoteCall.ToString(), "\n");
+                    data = string.Concat("data:", remoteCall.ToString(), "\n\n");
+                    st.WriteLine(data);
+                    st.Flush();
+                    //always send an empty package at the end
+                    data = string.Concat("data:", "-1", "\n\n");
                     st.WriteLine(data);
                     st.Flush();
                     ConnectionsMade.Add(remoteCall.ClientId);

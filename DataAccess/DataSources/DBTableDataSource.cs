@@ -14,6 +14,7 @@ using Needletail.DataAccess.Entities;
 using System.IO;
 using System.Threading.Tasks;
 using Needletail.DataAccess.Helper;
+using System.Collections;
 
 namespace Needletail.DataAccess {
     public class DBTableDataSourceBase<E, K> : IDisposable, IDataSourceAsync<E, K>, IDataSource<E, K> 
@@ -558,9 +559,59 @@ namespace Needletail.DataAccess {
         {
             return await GetManyAsync(where, FilterType.AND, orderBy, null);
         }
+
         public IEnumerable<E> GetMany(object where,object orderBy)
         {
             return GetMany(where, FilterType.AND, orderBy, null);
+        }
+
+        public IEnumerable<T> ExecuteStoredProcedureReturnRows<T>(string name, object parameters)
+        {
+            return AsyncHelpers.RunSync<IEnumerable<T>>(() => ExecuteStoredProcedureReturnRowsAsync<T>(name, parameters));
+        }
+
+        public async Task<IEnumerable<T>> ExecuteStoredProcedureReturnRowsAsync<T>(string name, object parameters)
+        {
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException("name");
+            }
+            IList<E> list = new List<E>();
+            var cmd = factory.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = connection;
+            cmd.CommandText = name;
+            //add the parameters
+            if(parameters != null)
+                AddParametersToCommand(cmd, parameters);
+
+            return await CreateGenericListFromCommandAsync<T> (cmd);
+        }
+
+        public void ExecuteStoredProcedure(string name, object parameters)
+        {
+             AsyncHelpers.RunSync(() => ExecuteStoredProcedureAsync(name, parameters));
+        }
+
+        public  async Task ExecuteStoredProcedureAsync(string name, object parameters)
+        {
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException("name");
+            }
+            var cmd = factory.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = connection;
+            cmd.CommandText = name;
+            //add the parameters
+            AddParametersToCommand(cmd, parameters);
+            //execute the SP
+            cmd.Prepare();
+            connection.Open();
+            await cmd.ExecuteNonQueryAsync();
+            connection.Close();
         }
 
         public async Task<E> GetSingleAsync(object where)
@@ -730,6 +781,17 @@ namespace Needletail.DataAccess {
         }
 
 
+        private void AddParametersToCommand( DbCommand cmd, object parameters)
+        {
+            //create the where
+            var props = parameters.GetType().GetProperties();
+            for (int x = 0; x < props.Length; x++)
+            {
+                var p = props[x];
+                //add the parameter
+                var newParam = AddParameter(p.Name, p.GetValue(parameters, null), cmd);
+            }
+        }
         private StringBuilder OrderByBuilder(object orderBy, DbCommand cmd)
         {
             
@@ -762,24 +824,34 @@ namespace Needletail.DataAccess {
 
 
         private async Task<IEnumerable<E>> CreateListFromCommandAsync(DbCommand cmd) {
-            IList<E> list = new List<E>();
+
+            return await CreateGenericListFromCommandAsync<E>(cmd);
+        }
+
+
+        private async Task<IEnumerable<T>> CreateGenericListFromCommandAsync<T>(DbCommand cmd)
+        {
+            IList<T> list = new List<T>();
             if (connection.State != ConnectionState.Closed) connection.Close();
             connection.Open();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-               cmd.Prepare();
+            cmd.Prepare();
             //fill the collection
-            using (var reader = await cmd.ExecuteReaderAsync()) {
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
                 var cols = new List<string>();
-                if(reader.Read()){
-                    for(int x=0; x<reader.FieldCount; x++){
-                       cols.Add(reader.GetName(x)); 
+                if (reader.Read())
+                {
+                    for (int x = 0; x < reader.FieldCount; x++)
+                    {
+                        cols.Add(reader.GetName(x));
                     }
                 }
                 if (cols.Count > 0)
                 {
                     do
                     {
-                        var item = Activator.CreateInstance<E>();
+                        var item = Activator.CreateInstance<T>();
                         foreach (var p in this.EProperties)
                         {
                             if (p.CanWrite && cols.IndexOf(p.Name) > -1 && reader[p.Name] != DBNull.Value)
@@ -876,7 +948,7 @@ namespace Needletail.DataAccess {
                 
             var param = factory.CreateParameter();
             param.ParameterName = !parameterName.StartsWith("@") ? string.Format("@{0}", parameterName) : parameterName;
-            if (value!= null && value.GetType().IsArray)
+            if (value!= null && value!= DBNull.Value && value.GetType().IsArray)
             {
                 //create the list
                 Array values = value as Array;
@@ -929,17 +1001,17 @@ namespace Needletail.DataAccess {
         public async Task ExecuteNonQueryAsync(string query, Dictionary<string, object> args)
         {
             var cmd = factory.CreateCommand();
-                cmd.Connection = connection;
-                cmd.CommandText = query;
-                //add the parameters
-                AddParameters(cmd, args);
-                if (connection.State != ConnectionState.Closed) connection.Close();
-                //execute the query
-                connection.Open();
-                if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-                cmd.Prepare();                
-                await cmd.ExecuteNonQueryAsync();
-                connection.Close();
+            cmd.Connection = connection;
+            cmd.CommandText = query;
+            //add the parameters
+            AddParameters(cmd, args);
+            if (connection.State != ConnectionState.Closed) connection.Close();
+            //execute the query
+            connection.Open();
+            if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            cmd.Prepare();                
+            await cmd.ExecuteNonQueryAsync();
+            connection.Close();
         }
 
         public void ExecuteNonQuery(string query, Dictionary<string, object> args)

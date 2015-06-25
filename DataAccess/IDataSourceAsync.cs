@@ -34,6 +34,9 @@ namespace Needletail.DataAccess {
         Task ExecuteNonQueryAsync(string query, Dictionary<string, object> args);
         Task<T> ExecuteScalarAsync<T>(string query, Dictionary<string, object> args);
 
+        Task ExecuteStoredProcedureAsync(string name, object parameters);
+
+        Task<IEnumerable<T>> ExecuteStoredProcedureReturnRowsAsync<T>(string name, object parameters);
         #endregion
 
     }

@@ -21,6 +21,8 @@ namespace Needletail.DataAccess.Engines {
                 Comparisons.Add("_In", In);
                 Comparisons.Add("And_",And);
                 Comparisons.Add("Or_",Or);
+                Comparisons.Add("_Is", Is);
+                Comparisons.Add("_IsNot", IsNot);
                 
             }
             internal const string EndsWith = " {0} LIKE '%' + {1} ";
@@ -33,6 +35,8 @@ namespace Needletail.DataAccess.Engines {
             internal const string In = " {0} IN ({1}) ";
             internal const string And = "And";
             internal const string Or = "Or";
+            internal const string Is = " {0} IS NULL";
+            internal const string IsNot = " {0} IS NOT NULL ";
         }
 
 

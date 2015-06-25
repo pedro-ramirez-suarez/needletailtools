@@ -232,6 +232,21 @@ namespace DataAccess.Repository.Hybrid
             return t;
         }
 
+
+        public System.Collections.Generic.IEnumerable<T> ExecuteStoredProcedureReturnRows<T>(string name, object parameters)
+        {
+            var result1 = _MSSQLContext.ExecuteStoredProcedureReturnRows<T>(name, parameters);
+            var result2 = _SqlCEContext.ExecuteStoredProcedureReturnRows<T>(name, parameters);
+            return result2.Union(result1);
+        }
+
+        public void ExecuteStoredProcedure(string name, object parameters)
+        {
+            _MSSQLContext.ExecuteStoredProcedure(name, parameters);
+            _SqlCEContext.ExecuteStoredProcedure(name, parameters);
+        }
+
+
         #region hybrid methods
         
         

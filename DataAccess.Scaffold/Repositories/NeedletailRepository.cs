@@ -170,6 +170,18 @@ namespace DataAccess.Scaffold.Repositories
             return this.dataSource.ExecuteScalar<T>(query: query, args: args);
         }
 
+
+        public System.Collections.Generic.IEnumerable<T> ExecuteStoredProcedureReturnRows<T>(string name, object parameters)
+        {
+            return this.dataSource.ExecuteStoredProcedureReturnRows<T>(name, parameters);
+        }
+        
+        public void ExecuteStoredProcedure(string name, object parameters)
+        {
+            this.dataSource.ExecuteStoredProcedure(name, parameters);
+        }
+
+
         public void Dispose()
         {
             this.dataSource.Dispose();

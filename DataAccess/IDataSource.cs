@@ -32,9 +32,9 @@ namespace Needletail.DataAccess {
         bool UpdateWithWhere(object values, object where);        
         void ExecuteNonQuery(string query, Dictionary<string, object> args);
         T ExecuteScalar<T>(string query, Dictionary<string, object> args);
-        
 
-        
+        System.Collections.Generic.IEnumerable<T> ExecuteStoredProcedureReturnRows<T>(string name, object parameters);
+        void ExecuteStoredProcedure(string name, object parameters);
 
     }
 }

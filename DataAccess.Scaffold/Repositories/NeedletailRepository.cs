@@ -1,4 +1,5 @@
 ﻿using Needletail.DataAccess;
+using Needletail.DataAccess.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -176,10 +177,16 @@ namespace DataAccess.Scaffold.Repositories
             return this.dataSource.ExecuteStoredProcedureReturnRows<T>(name, parameters);
         }
         
+        public IEnumerable<DynamicEntity> ExecuteStoredProcedureReturnDynaimcRows(string name, object parameters)
+        {
+            return this.dataSource.ExecuteStoredProcedureReturnDynaimcRows(name, parameters);
+        }
+        
         public void ExecuteStoredProcedure(string name, object parameters)
         {
             this.dataSource.ExecuteStoredProcedure(name, parameters);
         }
+
 
 
         public void Dispose()

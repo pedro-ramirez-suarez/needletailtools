@@ -79,17 +79,12 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataAccess\NeedetailDataAccessTest.cs" />
     <Compile Include="Mvc\ClientCallTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Mvc\RemoteExecutionControllerTest.cs" />
     <Compile Include="Mvc\RemoteExecutionTest.cs" />
     <Compile Include="Mvc\SseHelperTest.cs" />
     <Compile Include="Mvc\TwoWayResultTest.cs" />
-    <Compile Include="TestModel\Embarcacion.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <Shadow Include="Test References\Needletail.Mvc.accessor" />
@@ -108,7 +103,10 @@
       <Name>Needletail.Mvc</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="DataAccess\" />
+    <Folder Include="TestModel\" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

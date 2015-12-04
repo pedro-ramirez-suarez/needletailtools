@@ -34,6 +34,9 @@ namespace Needletail.DataAccess {
         T ExecuteScalar<T>(string query, Dictionary<string, object> args);
 
         System.Collections.Generic.IEnumerable<T> ExecuteStoredProcedureReturnRows<T>(string name, object parameters);
+
+        IEnumerable<DynamicEntity> ExecuteStoredProcedureReturnDynaimcRows(string name, object parameters);
+
         void ExecuteStoredProcedure(string name, object parameters);
 
     }

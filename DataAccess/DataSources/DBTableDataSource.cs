@@ -589,6 +589,33 @@ namespace Needletail.DataAccess {
             return await CreateGenericListFromCommandAsync<T> (cmd);
         }
 
+
+        public IEnumerable<DynamicEntity> ExecuteStoredProcedureReturnDynaimcRows(string name, object parameters)
+        {
+            return AsyncHelpers.RunSync<IEnumerable<DynamicEntity>>(() => ExecuteStoredProcedureReturnDynamicRowsAsync(name, parameters));
+        }
+
+        public async Task<IEnumerable<DynamicEntity>> ExecuteStoredProcedureReturnDynamicRowsAsync(string name, object parameters)
+        {
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentNullException("name");
+            }
+            IList<E> list = new List<E>();
+            var cmd = factory.CreateCommand();
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Connection = connection;
+            cmd.CommandText = name;
+            //add the parameters
+            if (parameters != null)
+                AddParametersToCommand(cmd, parameters);
+            
+            return await CreateUnknownItemListFromCommandAsync(cmd);
+            
+        }
+
+
         public void ExecuteStoredProcedure(string name, object parameters)
         {
              AsyncHelpers.RunSync(() => ExecuteStoredProcedureAsync(name, parameters));

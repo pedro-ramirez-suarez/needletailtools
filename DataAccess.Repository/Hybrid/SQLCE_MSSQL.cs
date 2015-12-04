@@ -246,6 +246,13 @@ namespace DataAccess.Repository.Hybrid
             _SqlCEContext.ExecuteStoredProcedure(name, parameters);
         }
 
+        public IEnumerable<DynamicEntity> ExecuteStoredProcedureReturnDynaimcRows(string name, object parameters)
+        {
+            var result1 = _MSSQLContext.ExecuteStoredProcedureReturnDynaimcRows(name, parameters);
+            var result2 = _SqlCEContext.ExecuteStoredProcedureReturnDynaimcRows(name, parameters);
+            return result2.Union(result1);
+        }
+
 
         #region hybrid methods
         

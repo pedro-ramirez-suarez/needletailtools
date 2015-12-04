@@ -53,10 +53,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SampleModel\Needletail.SampleModel.csproj">
-      <Project>{6af72230-3dbb-460f-99e5-4798711df654}</Project>
-      <Name>Needletail.SampleModel</Name>
-    </ProjectReference>
     <ProjectReference Include="..\DataAccess.Scaffold\DataAccess.Scaffold.csproj">
       <Project>{41aadbb3-c31b-4761-aa9b-317dfd4af17d}</Project>
       <Name>DataAccess.Scaffold</Name>

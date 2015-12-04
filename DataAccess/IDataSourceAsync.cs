@@ -37,6 +37,8 @@ namespace Needletail.DataAccess {
         Task ExecuteStoredProcedureAsync(string name, object parameters);
 
         Task<IEnumerable<T>> ExecuteStoredProcedureReturnRowsAsync<T>(string name, object parameters);
+
+        Task<IEnumerable<DynamicEntity>> ExecuteStoredProcedureReturnDynamicRowsAsync(string name, object parameters);
         #endregion
 
     }

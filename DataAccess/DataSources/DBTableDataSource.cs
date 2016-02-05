@@ -867,7 +867,7 @@ namespace Needletail.DataAccess {
             using (var reader = await cmd.ExecuteReaderAsync())
             {
                 var cols = new List<string>();
-                if (reader.Read())
+                if (await reader.ReadAsync())
                 {
                     for (int x = 0; x < reader.FieldCount; x++)
                     {
@@ -889,7 +889,7 @@ namespace Needletail.DataAccess {
 
                         }
                         list.Add(item);
-                    } while (reader.Read());
+                    } while (await reader.ReadAsync());
                 }
             }
             connection.Close();
@@ -911,7 +911,7 @@ namespace Needletail.DataAccess {
                 for (int x = 0; x < reader.FieldCount; x++) {
                     cols.Add(reader.GetName(x));
                 }
-                while (reader.Read()) {
+                while (await reader.ReadAsync()) {
 
                     DynamicEntity item = new DynamicEntity(cols);
                     reader.GetValues((item as DynamicEntity).Values);
@@ -944,7 +944,7 @@ namespace Needletail.DataAccess {
                 }
                 var tType  = typeof(T);
 
-                while (reader.Read())
+                while (await reader.ReadAsync())
                 {
                     //get the property
                     var item = Activator.CreateInstance<T>();

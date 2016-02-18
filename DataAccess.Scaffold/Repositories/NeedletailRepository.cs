@@ -56,6 +56,21 @@ namespace DataAccess.Scaffold.Repositories
             dataSource = new DBTableDataSourceBase<E, K>(this.ConnectionString, this.TableName);
         }
 
+        public void BeginTransaction(System.Data.IsolationLevel level)
+        {
+            this.dataSource.BeginTransaction(level);
+        }
+
+        public void CommitTransaction()
+        {
+            this.dataSource.CommitTransaction();
+        }
+
+        public void RollbackTransaction()
+        {
+            this.dataSource.RollbackTransaction();
+        }
+
         public bool Delete(object where, Needletail.DataAccess.Engines.FilterType filterType)
         {
             return this.dataSource.Delete(where: where, filterType: filterType);
@@ -193,5 +208,7 @@ namespace DataAccess.Scaffold.Repositories
         {
             this.dataSource.Dispose();
         }
+
+        
     }
 }

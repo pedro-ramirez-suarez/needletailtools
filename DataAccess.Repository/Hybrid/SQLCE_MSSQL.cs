@@ -40,6 +40,20 @@ namespace DataAccess.Repository.Hybrid
         #endregion
 
 
+        public void BeginTransaction(System.Data.IsolationLevel level)
+        {
+            //do nothing 
+        }
+
+        public void CommitTransaction()
+        {
+            //do nothing 
+        }
+
+        public void RollbackTransaction()
+        {
+            //do nothing
+        }
 
         public bool Delete(object where)
         {
@@ -283,6 +297,12 @@ namespace DataAccess.Repository.Hybrid
 
 
         #endregion
+
+
+
+
+
+
 
         
     }

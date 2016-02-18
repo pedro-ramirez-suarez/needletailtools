@@ -39,5 +39,11 @@ namespace Needletail.DataAccess {
 
         void ExecuteStoredProcedure(string name, object parameters);
 
+        void BeginTransaction(System.Data.IsolationLevel level);
+
+        void CommitTransaction();
+
+        void RollbackTransaction();
+
     }
 }

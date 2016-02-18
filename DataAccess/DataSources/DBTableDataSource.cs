@@ -35,6 +35,9 @@ namespace Needletail.DataAccess {
 
         private DbProviderFactory factory;
         private DbConnection connection;
+        private DbTransaction localTransaction;
+        private IsolationLevel? isolationLevel;
+
 
         private string ConnectionString { get; set; }
         private string TableName { get; set; }
@@ -43,7 +46,7 @@ namespace Needletail.DataAccess {
         private bool InsertKey { get; set; }
         private PropertyInfo[] EProperties {get;set;}
         private IDBMSEngine DBMSEngineHelper { get; set; }
-        TypeConverter converter;
+        //TypeConverter converter;
 
         /// <summary>
         /// Default ctor
@@ -186,11 +189,52 @@ namespace Needletail.DataAccess {
             }
         }
 
+
+        /// <summary>
+        /// The next time the connection is open, a transaction will be created using the isolation level set
+        /// IMPORTANT: Commit the transaction as soon as possible, so it's commited and the connection is closed
+        /// You need to set the isolation level each time that a transaction is commited.
+        /// </summary>
+        /// <param name="level">Desired isolation level for the transaction</param>
+        public void BeginTransaction(IsolationLevel level)
+        {
+            if (isolationLevel.HasValue)
+                throw new Exception("Isolation level cannot be changed until the transaction is commited");
+            //set isolation level
+            isolationLevel = level;
+            
+        }
+        
+        /// <summary>
+        /// Commits the transaction and closes the connection.
+        /// You need to set the isolation level each time that a transaction is commited.
+        /// </summary>
+        public void CommitTransaction()
+        {
+            //commit the transaction
+            localTransaction.Commit();
+            //close the connection
+            connection.Close();
+            localTransaction = null;
+            isolationLevel = null;
+        }
+
+        /// <summary>
+        /// Rollsback the transaction and closes the connection
+        /// </summary>
+        public void RollbackTransaction()
+        {
+            localTransaction.Rollback();
+            //close the connection
+            connection.Close();
+            localTransaction = null;
+            isolationLevel = null;
+        }
+
         public async Task<K> InsertAsync(E newItem)
         {
             var cmd = factory.CreateCommand();
             cmd.Connection = connection;
-            bool insertKey = false;
             object keyValue = null;
             //Build the query
             StringBuilder mainQuery = new StringBuilder();
@@ -226,7 +270,19 @@ namespace Needletail.DataAccess {
             //execute it
             cmd.CommandText = mainQuery.ToString();
             if (connection.State != ConnectionState.Closed) connection.Close();
-            connection.Open();
+            //open the connection only if we are not in the middle of a transaction
+            if (!isolationLevel.HasValue)
+                connection.Open();
+            else if (isolationLevel.HasValue && localTransaction == null) //set transaction if not set
+            {
+                //open the connection if is closed
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+                localTransaction = connection.BeginTransaction(isolationLevel.Value);
+            }
+            //set the transaction if is set
+            if (localTransaction != null)
+                cmd.Transaction = localTransaction;
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
             cmd.Prepare();
             var newId = await cmd.ExecuteScalarAsync();
@@ -234,6 +290,8 @@ namespace Needletail.DataAccess {
             if (newId == null)
             {
                 cmd.CommandText = " SELECT @@IDENTITY From [" + TableName + "]"; //To select the indentity
+                if (localTransaction != null)
+                    cmd.Transaction = localTransaction;
                 if (BeforeRunCommand != null) BeforeRunCommand(cmd);
                 cmd.Prepare();
                 newId =  await cmd.ExecuteScalarAsync(); //fix this
@@ -243,7 +301,9 @@ namespace Needletail.DataAccess {
                     newId = keyValue;
                 }
             }
-            connection.Close();
+            //close the connection only if we are not in a transaction
+            if(localTransaction == null)
+                connection.Close();
 
             if (newId == DBNull.Value)
                 return default(K);
@@ -317,14 +377,29 @@ namespace Needletail.DataAccess {
             }
 
             uq.AppendFormat(" WHERE [{0}] = @{0}", this.Key);
-            //execute it
+            
             cmd.CommandText = uq.ToString();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
             if (connection.State != ConnectionState.Closed) connection.Close();
-            connection.Open();
+            //open the connection if we are not in a transaction
+            if (!isolationLevel.HasValue)
+                connection.Open();
+            else if (isolationLevel.HasValue && localTransaction == null) //set transaction if not set
+            {
+                //open the connection if is closed
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+                localTransaction = connection.BeginTransaction(isolationLevel.Value);
+            }
+            //set the transaction if is set
+            if (localTransaction != null)
+                cmd.Transaction = localTransaction;
             cmd.Prepare();
+            //execute it
             var result = (int)await cmd.ExecuteNonQueryAsync();
-            connection.Close();
+            //close the connection only if we are not in a transaction
+            if (localTransaction == null)
+                connection.Close();
             return result > 0;
         }
 
@@ -366,10 +441,24 @@ namespace Needletail.DataAccess {
             cmd.CommandText = uq.ToString();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
             if (connection.State != ConnectionState.Closed) connection.Close();
-            connection.Open();
+            //open the connection if we are not in a transaction
+            if (!isolationLevel.HasValue)
+                connection.Open();
+            else if (isolationLevel.HasValue && localTransaction == null) //set transaction if not set
+            {
+                //open the connection if is closed
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+                localTransaction = connection.BeginTransaction(isolationLevel.Value);
+            }
+            //set the transaction if is set
+            if (localTransaction != null)
+                cmd.Transaction = localTransaction;
             cmd.Prepare();
             var result = (int)await cmd.ExecuteNonQueryAsync();
-            connection.Close();
+            //close the connection only if we are not in a transaction
+            if (localTransaction == null)
+                connection.Close();
             return result > 0;
         }
 
@@ -412,11 +501,25 @@ namespace Needletail.DataAccess {
             cmd.CommandText = wq.ToString();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
             if (connection.State != ConnectionState.Closed) connection.Close();
-            connection.Open();
+            //open the connection only if we are not in the middle of a transaction
+            if (!isolationLevel.HasValue)
+                connection.Open();
+            else if (isolationLevel.HasValue && localTransaction == null) //set transaction if not set
+            {
+                //open the connection if is closed
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+                localTransaction = connection.BeginTransaction(isolationLevel.Value);
+            }
+            //set the transaction if is set
+            if (localTransaction != null)
+                cmd.Transaction = localTransaction;
             cmd.Prepare();
 
             var result = (int) await cmd.ExecuteNonQueryAsync();
-            connection.Close();
+            //close the connection only if we are not in a transaction
+            if (localTransaction == null)
+                connection.Close();
             return result > 0;
         }
         
@@ -1080,7 +1183,7 @@ namespace Needletail.DataAccess {
             this.factory = null;
             if (connection.State != ConnectionState.Closed) connection.Close();
             this.connection.Dispose();
-            this.converter = null;
+            //this.converter = null;
             GC.Collect();
         }
     }

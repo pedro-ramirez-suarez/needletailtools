@@ -269,7 +269,7 @@ namespace Needletail.DataAccess {
 
             //execute it
             cmd.CommandText = mainQuery.ToString();
-            if (connection.State != ConnectionState.Closed) connection.Close();
+            if (connection.State != ConnectionState.Closed && !isolationLevel.HasValue) connection.Close();
             //open the connection only if we are not in the middle of a transaction
             if (!isolationLevel.HasValue)
                 connection.Open();
@@ -380,7 +380,7 @@ namespace Needletail.DataAccess {
             
             cmd.CommandText = uq.ToString();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            if (connection.State != ConnectionState.Closed) connection.Close();
+            if (connection.State != ConnectionState.Closed && !isolationLevel.HasValue) connection.Close();
             //open the connection if we are not in a transaction
             if (!isolationLevel.HasValue)
                 connection.Open();
@@ -424,6 +424,7 @@ namespace Needletail.DataAccess {
 
         public async Task<bool> UpdateWithWhereAsync(object values, object where, FilterType filterType) 
         {
+
             if (values == null)
             {
                 throw new ArgumentNullException("values cannot be null");
@@ -440,7 +441,7 @@ namespace Needletail.DataAccess {
             //execute it
             cmd.CommandText = uq.ToString();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            if (connection.State != ConnectionState.Closed) connection.Close();
+            if (connection.State != ConnectionState.Closed && !isolationLevel.HasValue) connection.Close();
             //open the connection if we are not in a transaction
             if (!isolationLevel.HasValue)
                 connection.Open();
@@ -500,7 +501,7 @@ namespace Needletail.DataAccess {
             //execute it
             cmd.CommandText = wq.ToString();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
-            if (connection.State != ConnectionState.Closed) connection.Close();
+            if (connection.State != ConnectionState.Closed && !isolationLevel.HasValue) connection.Close();
             //open the connection only if we are not in the middle of a transaction
             if (!isolationLevel.HasValue)
                 connection.Open();

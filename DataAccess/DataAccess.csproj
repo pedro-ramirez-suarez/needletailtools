@@ -58,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\ReadonlyFieldAttribute.cs" />
     <Compile Include="Attributes\TableKeyAttribute.cs" />
     <Compile Include="Engines\Converters.cs" />
     <Compile Include="Engines\DBMSEngineBase.cs" />

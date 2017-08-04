@@ -70,7 +70,9 @@
     <Compile Include="Repositories\NeedletailRepository.cs" />
     <Compile Include="ViewModels\ViewModelAutoLoad.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Attributes\Database\" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DataAccess\DataAccess.csproj">
       <Project>{67f95add-615e-48a5-a833-4ddba4c364ea}</Project>

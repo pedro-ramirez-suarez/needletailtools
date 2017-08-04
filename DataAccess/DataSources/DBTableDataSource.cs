@@ -39,13 +39,14 @@ namespace Needletail.DataAccess {
         private IsolationLevel? isolationLevel;
 
 
-        private string ConnectionString { get; set; }
+        public string ConnectionString { get; set; }
         private string TableName { get; set; }
         private string ConnectionKey { get { return string.Format("{0}:{1}", ConnectionString, TableName); } }
         private string Key { get; set; }
         private bool InsertKey { get; set; }
         private PropertyInfo[] EProperties {get;set;}
         private IDBMSEngine DBMSEngineHelper { get; set; }
+        private List<string> ReadonlyFields { get; set; }
         //TypeConverter converter;
 
         /// <summary>
@@ -60,17 +61,27 @@ namespace Needletail.DataAccess {
         /// <summary>
         /// Ctor
         /// </summary>
-        /// <param name="connectionString"></param>
+        /// <param name="connectionStringName"></param>
         /// <param name="tableName"></param>
-        public DBTableDataSourceBase(string connectionString, string tableName) 
+        public DBTableDataSourceBase(string connectionStringName, string tableName) 
         {
-            DBTableDataSourceInitializer(connectionString, tableName);
+            DBTableDataSourceInitializer(connectionStringName, tableName);
         }
-        
 
-        private void DBTableDataSourceInitializer(string connectionString, string tableName)
+        /// <summary>
+        /// Ctor
+        /// </summary>
+        /// <param name="connectionStringName"></param>
+        /// <param name="tableName"></param>
+        public DBTableDataSourceBase(string fullCconnectionString)
         {
-            if (string.IsNullOrWhiteSpace(connectionString))
+            this.ConnectionString = fullCconnectionString;
+            DBTableDataSourceInitializer(fullCconnectionString,  typeof(E).Name);
+        }
+
+        private void DBTableDataSourceInitializer(string connectionStringName, string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(connectionStringName))
             {
                 throw new ArgumentNullException("connectionString");
             }
@@ -79,18 +90,28 @@ namespace Needletail.DataAccess {
                 throw new ArgumentNullException("tableName");
             }
 
-            ConnectionString = connectionString;
+            string provider = string.Empty;
             TableName = tableName;
-
-            var cn = ConfigurationManager.ConnectionStrings[connectionString];
-            if (cn == null)
+            ConnectionStringSettings cn;
+            if (string.IsNullOrWhiteSpace(this.ConnectionString))
             {
-                throw new Exception("connection string does not exists");
+                ConnectionString = connectionStringName;
+                cn = ConfigurationManager.ConnectionStrings[connectionStringName];
+                if (cn == null)
+                {
+                    throw new Exception("connection string does not exists");
+                }
+                //prepare the factory
+                factory = DbProviderFactories.GetFactory(cn.ProviderName);
+            }
+            else
+            {
+                cn = new ConnectionStringSettings("Default", this.ConnectionString, "SqlClient");
+                factory = System.Data.SqlClient.SqlClientFactory.Instance;
+                
             }
 
-
-            //prepare the factory
-            factory = DbProviderFactories.GetFactory(cn.ProviderName);
+            
             if (factory == null)
             {
                 throw new Exception("Cannot get provider");
@@ -98,7 +119,7 @@ namespace Needletail.DataAccess {
 
             //get the provider
             var parts = cn.ProviderName.Split(new char[] { '.' });
-            string provider = string.Empty;
+            
             for (int x = parts.Length - 1; x >= 0; x--)
             {
                 //add the part until the part is not a number
@@ -180,7 +201,13 @@ namespace Needletail.DataAccess {
                 }
             }
             this.EProperties = props;
-
+            this.ReadonlyFields = new List<string>();
+            //get all the readonly fields
+            foreach (var p in this.EProperties)
+            {
+                if (p.GetCustomAttributes(typeof(ReadonlyFieldAttribute), true).Length > 0)
+                    this.ReadonlyFields.Add(p.Name);
+            }
 
 
             lock (connection)
@@ -247,11 +274,14 @@ namespace Needletail.DataAccess {
                 //do not include the ID
                 if (p.Name != this.Key || InsertKey)
                 {
+                    //skip readonly fields
+                    if (this.ReadonlyFields.Any(r=> r == p.Name))
+                        continue;
                     //set both
                     mainQuery.Append(p.Name);
                     valsQuery.AppendFormat("@{0}", p.Name);
                     //add the parameter
-                    AddParameter(p.Name, p.GetValue(newItem, null), cmd);
+                    AddParameter(p.Name, p.GetMethod.Invoke(newItem, null), cmd);
 
                     if (x <= this.EProperties.Length - 2)
                     {
@@ -260,7 +290,7 @@ namespace Needletail.DataAccess {
                     }
 
                     if (p.Name == this.Key)
-                        keyValue = p.GetValue(newItem, null);
+                        keyValue = p.GetMethod.Invoke(newItem, null);
                 }
             }
             mainQuery.Append(")");//Close the values
@@ -845,9 +875,13 @@ namespace Needletail.DataAccess {
                 //do not update the key
                 if (p.Name != this.Key)
                 {
+                    //skip readonly props
+                    if (this.ReadonlyFields.Any(r => r == p.Name))
+                        continue;
+
                     uq.AppendFormat(" {0} = @{0} ", p.Name);
                     //add the parameter
-                    AddParameter(p.Name, p.GetValue(item, null), cmd);
+                    AddParameter(p.Name, p.GetMethod.Invoke(item, null), cmd);
 
                     // we have the key
                     if (p.Name == this.Key)
@@ -863,7 +897,7 @@ namespace Needletail.DataAccess {
                 {
                     //add the key as a parameter
                     keyFound = true;
-                    AddParameter(p.Name, p.GetValue(item, null), cmd);
+                    AddParameter(p.Name, p.GetMethod.Invoke(item, null), cmd);
                 }
             }
             return uq;
@@ -903,7 +937,7 @@ namespace Needletail.DataAccess {
                 }
 
                 //add the parameter
-                var newParam = AddParameter(parameterName, p.GetValue(where, null), cmd);
+                var newParam = AddParameter(parameterName, p.GetMethod.Invoke(where, null), cmd);
                 if (newParam != null)
                     w.Replace(parameterName, newParam);
                 
@@ -920,7 +954,7 @@ namespace Needletail.DataAccess {
             {
                 var p = props[x];
                 //add the parameter
-                var newParam = AddParameter(p.Name, p.GetValue(parameters, null), cmd);
+                var newParam = AddParameter(p.Name, p.GetMethod.Invoke(parameters, null), cmd);
             }
         }
         private StringBuilder OrderByBuilder(object orderBy, DbCommand cmd)
@@ -940,7 +974,7 @@ namespace Needletail.DataAccess {
             for (int x = 0; x < props.Length; x++)
             {
                 var p = props[x];
-                var direction = p.GetValue(orderBy).ToString().ToUpper();
+                var direction = p.GetMethod.Invoke(orderBy,null).ToString().ToUpper();
                 if (direction == "ASC" || direction == "DESC")
                 {
                     w.AppendFormat(" {0} {1} ", p.Name, direction);
@@ -988,7 +1022,7 @@ namespace Needletail.DataAccess {
                             if (p.CanWrite && cols.IndexOf(p.Name) > -1 && reader[p.Name] != DBNull.Value)
                             {
                                 //check if the property exists in the DB
-                                p.SetValue(item, reader[p.Name], null);
+                                p.SetMethod.Invoke(item, new object[] {reader[p.Name]});
                             }
 
                         }
@@ -1057,7 +1091,7 @@ namespace Needletail.DataAccess {
                         var p = tType.GetProperty(cols[x]);
                         if (p != null && reader.GetValue(x) != DBNull.Value)
                         {
-                            p.SetValue(item,reader.GetValue(x), null);
+                            p.SetMethod.Invoke(item, new object[] { reader.GetValue(x) });
                         }
 
                     }

@@ -19,7 +19,7 @@ namespace Needletail.DataAccess.Engines {
             }
             catch {
                 SqlCeEngine e = new SqlCeEngine(connectionString);
-                e.Upgrade();
+                //e.Upgrade();
             }
             finally
             {

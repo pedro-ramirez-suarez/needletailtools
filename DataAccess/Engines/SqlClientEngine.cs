@@ -5,6 +5,7 @@ using System.Text;
 using System.Data.Common;
 using System.Data.SqlClient;
 using Microsoft.SqlServer.Types;
+using System.Data;
 
 namespace Needletail.DataAccess.Engines {
     public class SqlClientEngine : DBMSEngineBase, Needletail.DataAccess.Engines.IDBMSEngine
@@ -64,6 +65,10 @@ namespace Needletail.DataAccess.Engines {
             {
                 (param as SqlParameter).SqlDbType = System.Data.SqlDbType.Udt;
                 (param as SqlParameter).UdtTypeName = "GEOMETRY";
+            }
+            else if (value.GetType() == typeof(DataTable))
+            {
+                (param as SqlParameter).SqlDbType = System.Data.SqlDbType.Structured;
             }
         }
         

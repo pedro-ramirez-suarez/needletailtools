@@ -71,7 +71,7 @@ namespace DataAccess.Scaffold.ViewModels
                     var item = cl.PropertyType.GetProperties()[0];
                     dynamic context = CreateDataContextFor(item.PropertyType, out key);
                     dynamic list = context.GetAll();
-                    prop.SetValue(me, list);
+                    prop.SetMethod.Invoke(me, new object[] { list });
                     context.Dispose();
                 }
 
@@ -88,7 +88,7 @@ namespace DataAccess.Scaffold.ViewModels
                 record = context.GetSingle(string.Format("{0}=@id", key.Name), pars);
                 if (record == null)
                     record = Activator.CreateInstance(i.PropertyType);
-                i.SetValue(me, record);
+                i.SetMethod.Invoke(me, new object[] { record });
                 context.Dispose();
             }
 
@@ -104,7 +104,7 @@ namespace DataAccess.Scaffold.ViewModels
                 var item = prop.PropertyType.GetProperties()[0];
                 dynamic context = CreateDataContextFor(item.PropertyType, out key);
                 dynamic list = context.GetAll();
-                prop.SetValue(me, list);
+                prop.SetMethod.Invoke(me, new object[] { list });
                 context.Dispose();
             }
 
@@ -122,14 +122,14 @@ namespace DataAccess.Scaffold.ViewModels
                 //Get the value of the foreign key
                 PropertyInfo[] recordProps = record.GetType().GetProperties() as PropertyInfo[];
                 var fkProp = recordProps.FirstOrDefault(p => p.Name == s.ForeignKey);
-                var fkVal = fkProp.GetValue(record);
+                var fkVal = fkProp.GetMethod.Invoke(record,null);
                 pars.Add("foreignKey", fkVal);
                 string where = string.Format("{0} = @foreignKey", s.ReferencedField);
                 dynamic list = context.GetMany(where, string.Empty, pars, 0, int.MaxValue);
                 if (list.Count > 0)
-                    item.SetValue(me, list[0]);
+                    item.SetMethod.Invoke(me, new object[] {list[0]});
                 else
-                    item.SetValue(me, Activator.CreateInstance(item.PropertyType));
+                    item.SetMethod.Invoke(me, new object [] {Activator.CreateInstance(item.PropertyType)});
                 context.Dispose();
             }
 
@@ -148,11 +148,11 @@ namespace DataAccess.Scaffold.ViewModels
                 //Get the value of the foreign key
                 PropertyInfo[] recordProps = record.GetType().GetProperties() as PropertyInfo[];
                 var fkProp = recordProps.FirstOrDefault(p => p.Name == s.ForeignKey);
-                var fkVal = fkProp.GetValue(record);
+                var fkVal = fkProp.GetMethod.Invoke(record,null);
                 pars.Add("foreignKey", fkVal);
                 string where = string.Format("{0} = @foreignKey", s.ReferencedKey);
                 dynamic list = context.GetMany(where, string.Empty, pars, 0, int.MaxValue);
-                prop.SetValue(me, list);
+                prop.SetMethod.Invoke(me, new object[] {list});
                 context.Dispose();
             }
 
@@ -172,7 +172,7 @@ namespace DataAccess.Scaffold.ViewModels
                 //Get the value of the foreign key
                 PropertyInfo[] recordProps = record.GetType().GetProperties() as PropertyInfo[];
                 var fkProp = recordProps.FirstOrDefault(p => p.Name == s.ForeignKey);
-                var fkVal = fkProp.GetValue(record);
+                var fkVal = fkProp.GetMethod.Invoke(record,null);
                 pars.Add("foreignKey", fkVal);
                 string select = string.Format("[{0}].*", item.PropertyType.Name);
                 string join = string.Format("Inner Join [{0}] On [{1}].{2} = [{3}].{4} AND [{0}].[{5}] = @foreignKey", s.RelationTable, item.PropertyType.Name, fkProp.Name, s.RelationTable, s.RelationTableReferencedKey, s.RelationTableForeignKey);
@@ -182,7 +182,7 @@ namespace DataAccess.Scaffold.ViewModels
                 MethodInfo generic = method.MakeGenericMethod(item.PropertyType);
 
                 dynamic list = generic.Invoke(context,new object[] {select,join, where,string.Empty,pars});
-                prop.SetValue(me, list);
+                prop.SetMethod.Invoke(me, new object[] {list});
                 context.Dispose();
             }
         }
@@ -203,7 +203,7 @@ namespace DataAccess.Scaffold.ViewModels
         private bool IsNew(object entity, dynamic context)
         {
             var key = entity.GetType().GetProperties().FirstOrDefault(p => p.GetCustomAttributes(typeof(TableKeyAttribute), false) != null);
-            object keyValue = key.GetValue(entity);
+            object keyValue = key.GetMethod.Invoke(entity,null);
             //Check if the record already exists
             var pars = new Dictionary<string, object>();
             pars.Add("id", keyValue);
@@ -247,7 +247,7 @@ namespace DataAccess.Scaffold.ViewModels
             foreach (var i in ind)
             {
                 dynamic context = CreateDataContextFor(i.PropertyType, out key);
-                record = i.GetValue(me);
+                record = i.GetMethod.Invoke(me,null);
                 //Check if is an add or update
                 if (IsNew(record,context))
                     context.Insert(record);
@@ -268,7 +268,7 @@ namespace DataAccess.Scaffold.ViewModels
                 //Get the type of the list
                 var item = props.FirstOrDefault(p => p.Name == s.LocalObject);
                 dynamic context = CreateDataContextFor(item.PropertyType, out key);
-                record = item.GetValue(me);
+                record = item.GetMethod.Invoke(me,null);
                 if (IsNew(record,context))
                     context.Insert(record);
                 else

@@ -11,7 +11,7 @@ namespace Needletail.DataAccess.Engines {
 
         string GetQueryTemplateForTop(string columns,string from, string where, string orderBy,int? topN);
 
-        void ConfigureParameterForValue(DbParameter param, object value);
+        void ConfigureParameterForValue(DbParameter param, object value, byte precision = 10, byte scale = 2);
 
         bool NeedLockOnConnection { get; }
     }

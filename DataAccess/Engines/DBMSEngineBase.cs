@@ -16,7 +16,7 @@ namespace Needletail.DataAccess.Engines
 
 
 
-        public virtual void ConfigureParameterForValue(DbParameter param, object value)
+        public virtual void ConfigureParameterForValue(DbParameter param, object value, byte precision = 10, byte scale = 2)
         {
             param.DbType = Converters.GetDBTypeFor(param.Value);
         }
@@ -38,6 +38,9 @@ namespace Needletail.DataAccess.Engines
                 return false;
             }
         }
-        
+
+
+
+       
     }
 }

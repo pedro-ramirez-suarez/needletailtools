@@ -57,7 +57,7 @@ namespace Needletail.DataAccess.Engines {
                                              !string.IsNullOrWhiteSpace(orderBy) ? string.Format(" ORDER BY {0}", orderBy) : string.Empty);            
         }
 
-        public override void ConfigureParameterForValue(DbParameter param, object value)
+        public override void ConfigureParameterForValue(DbParameter param, object value, byte precision = 10, byte scale = 2)
         {
             param.DbType = Converters.GetDBTypeFor(param.Value);
             if (value == null || value == DBNull.Value)

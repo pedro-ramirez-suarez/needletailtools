@@ -45,7 +45,8 @@ namespace Needletail.DataAccess.Engines {
         }
 
 
-        public override void ConfigureParameterForValue(DbParameter param, object value)
+        ///
+        public override void ConfigureParameterForValue(DbParameter param, object value,byte precision = 10, byte scale = 2)
         {
             param.DbType = Converters.GetDBTypeFor(param.Value);
             if (value == null || value == DBNull.Value)
@@ -53,8 +54,8 @@ namespace Needletail.DataAccess.Engines {
             if (param.DbType == System.Data.DbType.Decimal)
             { 
                 //set precision 
-                (param as SqlParameter).Precision = 10; // this has to be configured manually
-                (param as SqlParameter).Scale = 2; // this has to be configured manually
+                (param as SqlParameter).Precision = precision; // this has to be configured manually
+                (param as SqlParameter).Scale = scale; // this has to be configured manually
             }
             else if (value.GetType() == typeof(SqlGeography))
             {

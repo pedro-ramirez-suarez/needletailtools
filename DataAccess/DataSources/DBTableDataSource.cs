@@ -1136,26 +1136,9 @@ namespace Needletail.DataAccess {
             { 
                 param.Value = value != null ? value : DBNull.Value;
                 
-                //if the value it's a decimal, 
-                Type t = value.GetType();
-                byte precision = 10;
-                byte scale = 2;
-                if (t == typeof(decimal) || t == typeof(float) || t == typeof(Int64))
-                {
-                    //precision
-                    string val = value.ToString();
-                    if (!byte.TryParse(val.Length.ToString(), out precision))
-                        precision = 38;
-                    //scale
-                    var point = val.IndexOf(".");
-                    if (point != -1)
-                    {
-                        if (!byte.TryParse((val.Length - point).ToString(), out scale))
-                            scale = 30;
-                    }
-                }
+               
                 //The dbType and the rest of the info
-                this.DBMSEngineHelper.ConfigureParameterForValue(param, value,precision,scale);
+                this.DBMSEngineHelper.ConfigureParameterForValue(param, value);
 
                 param.Direction = System.Data.ParameterDirection.Input;
                 param.Size = param.Value != null ? param.Value.ToString().Length + 1 : 1;

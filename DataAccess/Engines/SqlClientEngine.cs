@@ -52,7 +52,22 @@ namespace Needletail.DataAccess.Engines {
             if (value == null || value == DBNull.Value)
                 return;
             if (param.DbType == System.Data.DbType.Decimal)
-            { 
+            {
+                //precision
+                string val = value.ToString();
+                if (!byte.TryParse(val.Length.ToString(), out precision))
+                    precision = 38;
+                //scale
+                var point = val.IndexOf(".");
+                if (point != -1)
+                {
+                    if (!byte.TryParse((val.Length - point).ToString(), out scale))
+                        scale = 30;
+                }
+
+                if (precision < scale)
+                    precision += (byte)(scale+2);
+
                 //set precision 
                 (param as SqlParameter).Precision = precision; // this has to be configured manually
                 (param as SqlParameter).Scale = scale; // this has to be configured manually

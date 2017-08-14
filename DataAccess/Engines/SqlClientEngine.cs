@@ -65,7 +65,7 @@ namespace Needletail.DataAccess.Engines {
                         scale = 30;
                 }
 
-                if (precision < scale)
+                if (precision <= scale)
                     precision += (byte)(scale+2);
 
                 //set precision 

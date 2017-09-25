@@ -1000,6 +1000,7 @@ namespace Needletail.DataAccess {
             if (connection.State != ConnectionState.Closed) connection.Close();
             connection.Open();
             if (BeforeRunCommand != null) BeforeRunCommand(cmd);
+            var tProps = typeof(T) == typeof(E) ? this.EProperties : typeof(T).GetTypeInfo().GetProperties();
             cmd.Prepare();
             //fill the collection
             using (var reader = await cmd.ExecuteReaderAsync())
@@ -1017,7 +1018,7 @@ namespace Needletail.DataAccess {
                     do
                     {
                         var item = Activator.CreateInstance<T>();
-                        foreach (var p in this.EProperties)
+                        foreach (var p in tProps)
                         {
                             if (p.CanWrite && cols.IndexOf(p.Name) > -1 && reader[p.Name] != DBNull.Value)
                             {
